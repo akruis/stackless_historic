@@ -220,6 +220,11 @@ shutdown(how) -- shut down traffic in one or both directions\n\
 /* Non-MS WINDOWS includes */
 # include <netdb.h>
 
+/* This declaration is required for HPUX 10 */
+#if defined(__hpux) && !defined(h_errno)
+extern int h_errno;
+#endif
+
 /* Headers needed for inet_ntoa() and inet_addr() */
 # ifdef __BEOS__
 #  include <net/netdb.h>

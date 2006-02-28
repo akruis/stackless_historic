@@ -57,6 +57,11 @@ PyAPI_FUNC(PyObject *) PyCFunction_NewEx(PyMethodDef *, PyObject *,
    functions in modules. */
 #define METH_CLASS    0x0010
 #define METH_STATIC   0x0020
+#ifdef STACKLESS
+#define METH_STACKLESS 0x0040
+#else
+#define METH_STACKLESS 0x0000
+#endif
 
 typedef struct PyMethodChain {
     PyMethodDef *methods;		/* Methods of this type */

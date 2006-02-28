@@ -3,6 +3,7 @@
 
 #include "Python.h"
 #include "structmember.h"
+#include "core/stackless_impl.h"
 
 #define TP_DESCR_GET(t) \
     (PyType_HasFeature(t, Py_TPFLAGS_HAVE_CLASS) ? (t)->tp_descr_get : NULL)
@@ -1970,6 +1971,7 @@ instance_iternext(PyInstanceObject *self)
 static PyObject *
 instance_call(PyObject *func, PyObject *arg, PyObject *kw)
 {
+	STACKLESS_GETARG();
 	PyThreadState *tstate = PyThreadState_GET();
 	PyObject *res, *call = PyObject_GetAttrString(func, "__call__");
 	if (call == NULL) {
@@ -1995,8 +1997,11 @@ instance_call(PyObject *func, PyObject *arg, PyObject *kw)
 				"maximum __call__ recursion depth exceeded");
 		res = NULL;
 	}
-	else
+	else {
+		STACKLESS_PROMOTE_ALL();
 		res = PyObject_Call(call, arg, kw);
+		STACKLESS_ASSERT();
+	}
 	tstate->recursion_depth--;
 	Py_DECREF(call);
 	return res;
@@ -2086,6 +2091,7 @@ PyTypeObject PyInstance_Type = {
 	instance_new,				/* tp_new */
 };
 
+STACKLESS_DECLARE_METHOD(&PyInstance_Type, tp_call)
 
 /* Instance method objects are used for two purposes:
    (a) as bound instance methods (returned by instancename.methodname)
@@ -2379,6 +2385,7 @@ getinstclassname(PyObject *inst, char *buf, int bufsize)
 static PyObject *
 instancemethod_call(PyObject *func, PyObject *arg, PyObject *kw)
 {
+	STACKLESS_GETARG();
 	PyObject *self = PyMethod_GET_SELF(func);
 	PyObject *class = PyMethod_GET_CLASS(func);
 	PyObject *result;
@@ -2430,7 +2437,9 @@ instancemethod_call(PyObject *func, PyObject *arg, PyObject *kw)
 		}
 		arg = newarg;
 	}
+	STACKLESS_PROMOTE_ALL();
 	result = PyObject_Call((PyObject *)func, arg, kw);
+	STACKLESS_ASSERT();
 	Py_DECREF(arg);
 	return result;
 }
@@ -2482,7 +2491,7 @@ PyTypeObject PyMethod_Type = {
 	(getattrofunc)instancemethod_getattro,	/* tp_getattro */
 	PyObject_GenericSetAttr,		/* tp_setattro */
 	0,					/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, /* tp_flags */
 	instancemethod_doc,			/* tp_doc */
 	(traverseproc)instancemethod_traverse,	/* tp_traverse */
 	0,					/* tp_clear */
@@ -2502,6 +2511,8 @@ PyTypeObject PyMethod_Type = {
 	0,					/* tp_alloc */
 	instancemethod_new,			/* tp_new */
 };
+
+STACKLESS_DECLARE_METHOD(&PyMethod_Type, tp_call)
 
 /* Clear out the free list */
 

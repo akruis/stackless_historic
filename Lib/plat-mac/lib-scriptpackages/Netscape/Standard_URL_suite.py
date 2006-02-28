@@ -1,4 +1,4 @@
-"""Suite Standard URL suite: Mac URL standard, supported by many apps
+"""Suite Standard URL suite: Mac URL standard, supported by many apps
 Level 1, version 1
 
 Generated from /Volumes/Sap/Applications (Mac OS 9)/Netscape Communicator\xe2\x84\xa2 Folder/Netscape Communicator\xe2\x84\xa2
@@ -19,7 +19,7 @@ class Standard_URL_suite_Events:
     }
 
     def GetURL(self, _object, _attributes={}, **_arguments):
-        """GetURL: Loads the URL (optionally to disk)
+        """GetURL: Loads the URL (optionally to disk)
         Required argument: The url 
         Keyword argument to: file the URL should be loaded into  
         Keyword argument inside: Window the URL should be loaded to

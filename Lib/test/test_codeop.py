@@ -17,6 +17,16 @@ if is_jython:
                 d[n] = callable
         return d
 
+if is_jython:
+    import sys
+    import cStringIO
+
+    def unify_callables(d):
+        for n,v in d.items():
+            if callable(v):
+                d[n] = callable
+        return d
+
 class CodeopTests(unittest.TestCase):
 
     def assertValid(self, str, symbol='single'):

@@ -12,6 +12,7 @@
 #include "symtable.h"
 #include "eval.h"
 #include "marshal.h"
+#include "core/stackless_impl.h"
 
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -169,6 +170,13 @@ Py_Initialize(void)
 		Py_FatalError("Py_Initialize: can't make first thread");
 	(void) PyThreadState_Swap(tstate);
 
+#ifdef STACKLESS
+	if (!_PyStackless_InitTypes()) {
+		PyErr_Print();
+		Py_FatalError("Py_Initialize: can't init stackless types");
+	}
+#endif
+
 	_Py_ReadyTypes();
 
 	if (!_PyFrame_Init())
@@ -215,6 +223,9 @@ Py_Initialize(void)
 
 	initsigs(); /* Signal handling stuff, including initintr() */
 
+#ifdef STACKLESS
+	_PyStackless_Init();
+#endif
 	initmain(); /* Module __main__ */
 	if (!Py_NoSiteFlag)
 		initsite(); /* Module site */
@@ -318,6 +329,9 @@ Py_Finalize(void)
 	 * the threads created via Threading.
 	 */
 	call_sys_exitfunc();
+#ifdef STACKLESS
+	PyStackless_kill_tasks_with_stacks(1);
+#endif
 	initialized = 0;
 
 	/* Get current thread state and interpreter pointer */
@@ -420,6 +434,9 @@ Py_Finalize(void)
 #ifdef Py_USING_UNICODE
 	/* Cleanup Unicode implementation */
 	_PyUnicode_Fini();
+#endif
+#ifdef STACKLESS
+	PyStackless_Fini();
 #endif
 
 	/* XXX Still allocated:
@@ -1209,9 +1226,11 @@ PyObject *
 PyRun_FileEx(FILE *fp, const char *filename, int start, PyObject *globals,
 	     PyObject *locals, int closeit)
 {
+	STACKLESS_GETARG();
 	node *n = PyParser_SimpleParseFile(fp, filename, start);
 	if (closeit)
 		fclose(fp);
+	STACKLESS_PROMOTE_ALL();
 	return run_err_node(n, filename, globals, locals, NULL);
 }
 
@@ -1236,10 +1255,12 @@ PyObject *
 PyRun_FileExFlags(FILE *fp, const char *filename, int start, PyObject *globals,
 		  PyObject *locals, int closeit, PyCompilerFlags *flags)
 {
+	STACKLESS_GETARG();
 	node *n = PyParser_SimpleParseFileFlags(fp, filename, start,
 						PARSER_FLAGS(flags));
 	if (closeit)
 		fclose(fp);
+	STACKLESS_PROMOTE_ALL();
 	return run_err_node(n, filename, globals, locals, flags);
 }
 
@@ -1247,8 +1268,10 @@ static PyObject *
 run_err_node(node *n, const char *filename, PyObject *globals, PyObject *locals,
 	     PyCompilerFlags *flags)
 {
+	STACKLESS_GETARG();
 	if (n == NULL)
 		return  NULL;
+	STACKLESS_PROMOTE_ALL();
 	return run_node(n, filename, globals, locals, flags);
 }
 
@@ -1256,13 +1279,16 @@ static PyObject *
 run_node(node *n, const char *filename, PyObject *globals, PyObject *locals,
 	 PyCompilerFlags *flags)
 {
+	STACKLESS_GETARG();
 	PyCodeObject *co;
 	PyObject *v;
 	co = PyNode_CompileFlags(n, filename, flags);
 	PyNode_Free(n);
 	if (co == NULL)
 		return NULL;
+	STACKLESS_PROMOTE_ALL();
 	v = PyEval_EvalCode(co, globals, locals);
+	STACKLESS_ASSERT();
 	Py_DECREF(co);
 	return v;
 }
@@ -1672,6 +1698,10 @@ PyOS_getsig(int sig)
 	return context.sa_handler;
 #else
 	PyOS_sighandler_t handler;
+#if (_MSC_VER >= 1400) /* strict error handling on VC8.0 */
+	if (!(sig == SIGABRT || sig == SIGFPE || sig == SIGILL || sig == SIGINT || sig == SIGSEGV || sig == SIGTERM))
+		return SIG_ERR;
+#endif
 	handler = signal(sig, SIG_IGN);
 	signal(sig, handler);
 	return handler;

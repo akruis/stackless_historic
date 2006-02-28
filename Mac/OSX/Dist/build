@@ -1,11 +1,11 @@
 #!/bin/sh -e
 #----------------------------------------------------------------------
-# Build MacPython 2.3 and make an Installer package of it
+# Build Stackless 2.3 and make an Installer package of it
 
 # TODO:  Parameterize the versions, builddirs, etc...
 
 # Script configs
-PYVERSION=2.3.2
+PYVERSION=2.3.3
 PYVER=2.3
 BUILDNUM=1
 DOCLEANUP=no
@@ -100,7 +100,7 @@ if [ "$builddocs" = "y" -o "$builddocs" = "Y" ]; then
     echo ""
     read -p "When the help indexer is done press Enter..." ans
     ./python.exe $PYTHONSRC/Mac/OSX/setupDocs.py install \
-	--prefix=$INSTALLROOT/Library/Frameworks/Python.framework/Versions/$PYVER
+	--prefix=$INSTALLROOT/Library/Frameworks/Stackless.framework/Versions/$PYVER
 fi
 
 popd
@@ -113,15 +113,15 @@ popd
 rm -rf $INSTALLROOT/usr
 
 # Next, remove the .pyc/.pyo files
-python $PYTHONSRC/Mac/scripts/zappycfiles.py $INSTALLROOT/Library/Frameworks/Python.framework/Versions/$PYVER/lib/python$PYVER
-python $PYTHONSRC/Mac/scripts/zappycfiles.py $INSTALLROOT/Library/Frameworks/Python.framework/Versions/$PYVER/Mac/Tools
+python $PYTHONSRC/Mac/scripts/zappycfiles.py $INSTALLROOT/Library/Frameworks/Stackless.framework/Versions/$PYVER/lib/python$PYVER
+python $PYTHONSRC/Mac/scripts/zappycfiles.py $INSTALLROOT/Library/Frameworks/Stackless.framework/Versions/$PYVER/Mac/Tools
 
 # Finally, build the package...
-rm -rf MacPython-OSX.pkg
+rm -rf Stackless-OSX.pkg
 python $PYTHONSRC/Mac/scripts/buildpkg.py \
-    --Title=MacPython-OSX \
+    --Title=Stackless-OSX \
     --Version=$PYVERSION-$BUILDNUM \
-    --Description="Python $PYVERSION for Mac OS X, framework based" \
+    --Description="Stackless Python $PYVERSION for Mac OS X, framework based" \
     --NeedsAuthorization="YES" \
     --Relocatable="NO" \
     --InstallOnly="YES" \
@@ -132,15 +132,15 @@ python $PYTHONSRC/Mac/scripts/buildpkg.py \
 #    --RootVolumeOnly="YES" \
 
 # ...and then make a disk image containing the package.
-mv MacPython-OSX.pkg $DMGDIR/root
+mv Stackless-OSX.pkg $DMGDIR/root
 cp $RESOURCEDIR/ReadMe.txt $DMGDIR/root/ReadMe.txt
-$PROGDIR/makedmg $DMGDIR/root $DMGDIR MacPython-OSX-$PYVERSION-$BUILDNUM
+$PROGDIR/makedmg $DMGDIR/root $DMGDIR Stackless-OSX-$PYVERSION-$BUILDNUM
 
-echo Moving $DMGDIR/MacPython-OSX-$PYVERSION-$BUILDNUM to $DESTDIR
+echo Moving $DMGDIR/Stackless-OSX-$PYVERSION-$BUILDNUM to $DESTDIR
 if [ ! -e $DESTDIR ]; then
     mkdir $DESTDIR
 fi
-mv $DMGDIR/MacPython-OSX-$PYVERSION-$BUILDNUM.dmg $DESTDIR
+mv $DMGDIR/Stackless-OSX-$PYVERSION-$BUILDNUM.dmg $DESTDIR
 
 
 # Cleanup build/install dirs

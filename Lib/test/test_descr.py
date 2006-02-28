@@ -3938,6 +3938,106 @@ def filefault():
     except RuntimeError:
         pass
 
+def subclass_right_op():
+    if verbose:
+        print "Testing correct dispatch of subclass overloading __r<op>__..."
+
+    # This code tests various cases where right-dispatch of a subclass
+    # should be preferred over left-dispatch of a base class.
+
+    # Case 1: subclass of int; this tests code in abstract.c::binary_op1()
+
+    class B(int):
+        def __div__(self, other):
+            return "B.__div__"
+        def __rdiv__(self, other):
+            return "B.__rdiv__"
+
+    vereq(B(1) / 1, "B.__div__")
+    vereq(1 / B(1), "B.__rdiv__")
+
+    # Case 2: subclass of object; this is just the baseline for case 3
+
+    class C(object):
+        def __div__(self, other):
+            return "C.__div__"
+        def __rdiv__(self, other):
+            return "C.__rdiv__"
+
+    vereq(C() / 1, "C.__div__")
+    vereq(1 / C(), "C.__rdiv__")
+
+    # Case 3: subclass of new-style class; here it gets interesting
+
+    class D(C):
+        def __div__(self, other):
+            return "D.__div__"
+        def __rdiv__(self, other):
+            return "D.__rdiv__"
+
+    vereq(D() / C(), "D.__div__")
+    vereq(C() / D(), "D.__rdiv__")
+
+    # Case 4: this didn't work right in 2.2.2 and 2.3a1
+
+    class E(C):
+        pass
+
+    vereq(E.__rdiv__, C.__rdiv__)
+
+    vereq(E() / 1, "C.__div__")
+    vereq(1 / E(), "C.__rdiv__")
+    vereq(E() / C(), "C.__div__")
+    vereq(C() / E(), "C.__div__") # This one would fail
+
+def dict_type_with_metaclass():
+    if verbose:
+        print "Testing type of __dict__ when __metaclass__ set..."
+
+    class B(object):
+        pass
+    class M(type):
+        pass
+    class C:
+        # In 2.3a1, C.__dict__ was a real dict rather than a dict proxy
+        __metaclass__ = M
+    veris(type(C.__dict__), type(B.__dict__))
+
+def weakref_segfault():
+    # SF 742911
+    if verbose:
+        print "Testing weakref segfault..."
+
+    import weakref
+
+    class Provoker:
+        def __init__(self, referrent):
+            self.ref = weakref.ref(referrent)
+
+        def __del__(self):
+            x = self.ref()
+
+    class Oops(object):
+        pass
+
+    o = Oops()
+    o.whatever = Provoker(o)
+    del o
+
+
+def crash_in_get_sf736892():
+    def func():
+        pass
+
+    try:
+        f = func.__get__(None)
+    except TypeError:
+        pass
+    else:
+        # should not get here
+        f(1) # crash
+
+
 def test_main():
     weakref_segfault() # Must be first, somehow
     do_this_first()

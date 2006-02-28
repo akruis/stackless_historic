@@ -30,6 +30,15 @@
  * Doc/lib/libexcs.tex!
  */
 
+#ifdef STACKLESS
+#define STACKLESS_EXCEPTION_TEXT \
+ "\
+ +-- TaskletExit\n\
+"
+#else
+#define STACKLESS_EXCEPTION_TEXT ""
+#endif
+
 PyDoc_STRVAR(module__doc__,
 "Python's standard exception class hierarchy.\n\
 \n\
@@ -56,6 +65,9 @@ recommended that user defined class based exceptions be derived from the\n\
 Exception\n\
  |\n\
  +-- SystemExit\n\
+"
+STACKLESS_EXCEPTION_TEXT
+"\
  +-- StopIteration\n\
  +-- StandardError\n\
  |    |\n\
@@ -395,6 +407,10 @@ PyDoc_STRVAR(TypeError__doc__, "Inappropriate argument type.");
 
 PyDoc_STRVAR(StopIteration__doc__, "Signal the end from iterator.next().");
 
+#ifdef STACKLESS
+static char
+TaskletExit__doc__[] = "Request to exit from a tasklet.";
+#endif
 
 
 PyDoc_STRVAR(SystemExit__doc__, "Request to exit from the interpreter.");
@@ -1583,6 +1599,9 @@ static PyMethodDef functions[] = {
 
 PyObject *PyExc_Exception;
 PyObject *PyExc_StopIteration;
+#ifdef STACKLESS
+PyObject *PyExc_TaskletExit;
+#endif
 PyObject *PyExc_StandardError;
 PyObject *PyExc_ArithmeticError;
 PyObject *PyExc_LookupError;
@@ -1664,6 +1683,10 @@ static struct {
   */
  {"SystemExit", &PyExc_SystemExit, &PyExc_Exception, SystemExit__doc__,
   SystemExit_methods},
+#ifdef STACKLESS
+ {"TaskletExit", &PyExc_TaskletExit, &PyExc_SystemExit,
+  TaskletExit__doc__},
+#endif
  {"KeyboardInterrupt",  &PyExc_KeyboardInterrupt, 0, KeyboardInterrupt__doc__},
  {"ImportError",        &PyExc_ImportError,       0, ImportError__doc__},
  {"EnvironmentError",   &PyExc_EnvironmentError,  0, EnvironmentError__doc__,

@@ -4,7 +4,6 @@
 extern "C" {
 #endif
 
-
 /* Interface to random parts in ceval.c */
 
 PyAPI_FUNC(PyObject *) PyEval_CallObjectWithKeywords(

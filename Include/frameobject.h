@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+#ifdef STACKLESS
+typedef PyObject *(PyFrame_ExecFunc) (struct _frame *, PyObject *);
+#endif
+
 typedef struct {
     int b_type;			/* what kind of block this is */
     int b_handler;		/* where to jump to find handler */
@@ -16,7 +20,12 @@ typedef struct {
 typedef struct _frame {
     PyObject_VAR_HEAD
     struct _frame *f_back;	/* previous frame, or NULL */
+#ifdef STACKLESS
+    /* support for soft stackless */
+    PyFrame_ExecFunc *f_execute;
+#else
     PyCodeObject *f_code;	/* code segment */
+#endif
     PyObject *f_builtins;	/* builtin symbol table (PyDictObject) */
     PyObject *f_globals;	/* global symbol table (PyDictObject) */
     PyObject *f_locals;		/* local symbol table (PyDictObject) */
@@ -40,6 +49,9 @@ typedef struct _frame {
     int f_ncells;
     int f_nfreevars;
     int f_stacksize;		/* size of value stack */
+#ifdef STACKLESS
+    PyCodeObject *f_code;	/* code segment */
+#endif
     PyObject *f_localsplus[1];	/* locals+stack, dynamically sized */
 } PyFrameObject;
 

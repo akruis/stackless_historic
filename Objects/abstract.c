@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include "structmember.h" /* we need the offsetof() macro from there */
 #include "longintrepr.h"
+#include "core/stackless_impl.h"
 
 #define NEW_STYLE_NUMBER(o) PyType_HasFeature((o)->ob_type, \
 				Py_TPFLAGS_CHECKTYPES)
@@ -1749,10 +1750,12 @@ PyObject_CallObject(PyObject *o, PyObject *a)
 PyObject *
 PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 {
-        ternaryfunc call;
+	STACKLESS_GETARG();
+	ternaryfunc call;
 
 	if ((call = func->ob_type->tp_call) != NULL) {
-		PyObject *result = (*call)(func, arg, kw);
+		PyObject *result = (STACKLESS_PROMOTE(func), (*call)(func, arg, kw));
+		STACKLESS_ASSERT();
 		if (result == NULL && !PyErr_Occurred())
 			PyErr_SetString(
 				PyExc_SystemError,
@@ -1767,6 +1770,7 @@ PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw)
 PyObject *
 PyObject_CallFunction(PyObject *callable, char *format, ...)
 {
+	STACKLESS_GETARG();
 	va_list va;
 	PyObject *args, *retval;
 
@@ -1794,8 +1798,9 @@ PyObject_CallFunction(PyObject *callable, char *format, ...)
 			return NULL;
 		args = a;
 	}
+	STACKLESS_PROMOTE_ALL();
 	retval = PyObject_Call(callable, args, NULL);
-
+	STACKLESS_ASSERT();
 	Py_DECREF(args);
 
 	return retval;
@@ -1804,6 +1809,7 @@ PyObject_CallFunction(PyObject *callable, char *format, ...)
 PyObject *
 PyObject_CallMethod(PyObject *o, char *name, char *format, ...)
 {
+	STACKLESS_GETARG();
 	va_list va;
 	PyObject *args, *func = 0, *retval;
 
@@ -1840,9 +1846,11 @@ PyObject_CallMethod(PyObject *o, char *name, char *format, ...)
 			return NULL;
 		args = a;
 	}
+	STACKLESS_PROMOTE_ALL();
 
 	retval = PyObject_Call(func, args, NULL);
 
+	STACKLESS_ASSERT();
 	Py_DECREF(args);
 	Py_DECREF(func);
 
@@ -1883,6 +1891,7 @@ objargs_mktuple(va_list va)
 PyObject *
 PyObject_CallMethodObjArgs(PyObject *callable, PyObject *name, ...)
 {
+	STACKLESS_GETARG();
 	PyObject *args, *tmp;
 	va_list vargs;
 
@@ -1901,7 +1910,9 @@ PyObject_CallMethodObjArgs(PyObject *callable, PyObject *name, ...)
 		Py_DECREF(callable);
 		return NULL;
 	}
+	STACKLESS_PROMOTE_ALL();
 	tmp = PyObject_Call(callable, args, NULL);
+	STACKLESS_ASSERT();
 	Py_DECREF(args);
 	Py_DECREF(callable);
 
@@ -1911,6 +1922,7 @@ PyObject_CallMethodObjArgs(PyObject *callable, PyObject *name, ...)
 PyObject *
 PyObject_CallFunctionObjArgs(PyObject *callable, ...)
 {
+	STACKLESS_GETARG();
 	PyObject *args, *tmp;
 	va_list vargs;
 
@@ -1923,7 +1935,9 @@ PyObject_CallFunctionObjArgs(PyObject *callable, ...)
 	va_end(vargs);
 	if (args == NULL)
 		return NULL;
+	STACKLESS_PROMOTE_ALL();
 	tmp = PyObject_Call(callable, args, NULL);
+	STACKLESS_ASSERT();
 	Py_DECREF(args);
 
 	return tmp;
@@ -2181,9 +2195,15 @@ PyObject_GetIter(PyObject *o)
 PyObject *
 PyIter_Next(PyObject *iter)
 {
+	STACKLESS_GETARG();
 	PyObject *result;
 	assert(PyIter_Check(iter));
+#ifdef STACKLESS
+	/* we use the same flag here, since iterators are not callable */
+#endif
+	STACKLESS_PROMOTE_METHOD(iter, tp_iternext);
 	result = (*iter->ob_type->tp_iternext)(iter);
+	STACKLESS_ASSERT();
 	if (result == NULL &&
 	    PyErr_Occurred() &&
 	    PyErr_ExceptionMatches(PyExc_StopIteration))

@@ -145,6 +145,25 @@ fill_file_fields(PyFileObject *f, FILE *fp, char *name, char *mode,
 	return (PyObject *) f;
 }
 
+#if defined _MSC_VER && _MSC_VER>=1400
+int verify_mode(const char *mode)
+{
+	if (!strlen(mode)) return 1;
+	if (*mode != 'r' && *mode != 'w' && *mode != 'a')
+		goto ERR;
+	mode++;
+	if (*mode == '+')
+		mode++;
+	if (*mode == 'b')
+		mode++;
+	if (!*mode)
+		return 2;
+ERR:
+	PyErr_SetString(PyExc_ValueError, "invalid mode");
+	return 0;
+}
+#endif 
+
 static PyObject *
 open_the_file(PyFileObject *f, char *name, char *mode)
 {
@@ -203,6 +222,10 @@ open_the_file(PyFileObject *f, char *name, char *mode)
 		}
 #endif
 		if (NULL == f->f_fp && NULL != name) {
+#if defined _MSC_VER && _MSC_VER >= 1400
+			if (!verify_mode(mode))
+				return NULL; /* c runtime asserts on bad mode, we don't want that. */
+#endif
 			Py_BEGIN_ALLOW_THREADS
 			f->f_fp = fopen(name, mode);
 			Py_END_ALLOW_THREADS

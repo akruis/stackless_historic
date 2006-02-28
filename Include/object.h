@@ -4,6 +4,9 @@
 extern "C" {
 #endif
 
+#ifdef STACKLESS
+#include "core/slp_exttype.h"
+#endif
 
 /* Object and type object interface */
 
@@ -324,8 +327,30 @@ typedef struct _typeobject {
 	int tp_maxalloc;
 	struct _typeobject *tp_next;
 #endif
+#ifdef STACKLESS
+	/* we need the extended structure right here */
+	PyNumberMethods as_number;
+	PyMappingMethods as_mapping;
+	PySequenceMethods as_sequence; /* as_sequence comes after as_mapping,
+					  so that the mapping wins when both
+					  the mapping and the sequence define
+					  a given operator (e.g. __getitem__).
+					  see add_operators() in typeobject.c . */
+	PyBufferProcs as_buffer;
+	PyObject *name, *slots;
+	slp_methodflags slpflags;
+#endif
 } PyTypeObject;
 
+
+#ifdef STACKLESS
+
+/* in Stackless, this is just a synonym */
+#define PyHeapTypeObject PyTypeObject
+
+#define PyHeapType_GET_MEMBERS(etype) \
+    ((PyMemberDef *)(((char *)etype) + (etype)->ob_type->tp_basicsize))
+#else
 
 /* The *real* layout of a type object when allocated on the heap */
 typedef struct _heaptypeobject {
@@ -348,6 +373,7 @@ typedef struct _heaptypeobject {
 #define PyHeapType_GET_MEMBERS(etype) \
     ((PyMemberDef *)(((char *)etype) + (etype)->type.ob_type->tp_basicsize))
 
+#endif
 
 /* Generic type check */
 PyAPI_FUNC(int) PyType_IsSubtype(PyTypeObject *, PyTypeObject *);
@@ -490,7 +516,8 @@ given type object has a specified feature.
 
 /* These two bits are preserved for Stackless Python, next after this is 16 */
 #ifdef STACKLESS
-#define Py_TPFLAGS_HAVE_STACKLESS_EXTENSION (3L<<15)
+#define Py_TPFLAGS_HAVE_STACKLESS_CALL (1L<<15)
+#define Py_TPFLAGS_HAVE_STACKLESS_EXTENSION (1L<<16)
 #else
 #define Py_TPFLAGS_HAVE_STACKLESS_EXTENSION 0
 #endif
@@ -503,7 +530,7 @@ given type object has a specified feature.
                              Py_TPFLAGS_HAVE_WEAKREFS | \
                              Py_TPFLAGS_HAVE_ITER | \
                              Py_TPFLAGS_HAVE_CLASS | \
-                             Py_TPFLAGS_HAVE_STACKLESS_EXTENSION | \
+			     Py_TPFLAGS_HAVE_STACKLESS_EXTENSION | \
                             0)
 
 #define PyType_HasFeature(t,f)  (((t)->tp_flags & (f)) != 0)

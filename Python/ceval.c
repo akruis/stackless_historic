@@ -13,6 +13,8 @@
 #include "eval.h"
 #include "opcode.h"
 #include "structmember.h"
+#include "core/stackless_impl.h"
+#include "platf/slp_platformselect.h" /* for stack saving */
 
 #ifdef macintosh
 #include "macglue.h"
@@ -32,7 +34,11 @@
 typedef PyObject *(*callproc)(PyObject *, PyObject *, PyObject *);
 
 /* Forward declarations */
+#ifdef STACKLESS
+#define eval_frame PyEval_EvalFrame
+#else
 static PyObject *eval_frame(PyFrameObject *);
+#endif
 static PyObject *call_function(PyObject ***, int);
 static PyObject *fast_function(PyObject *, PyObject ***, int, int, int);
 static PyObject *do_call(PyObject *, PyObject ***, int, int);
@@ -143,7 +149,12 @@ PyEval_GetCallStats(PyObject *self)
 }
 #endif
 
+#ifdef STACKLESS
+PyTypeObject PyGenerator_Type;
+#define gentype PyGenerator_Type
+#else
 static PyTypeObject gentype;
+#endif
 
 typedef struct {
 	PyObject_HEAD
@@ -158,8 +169,14 @@ typedef struct {
 	PyObject *gi_weakreflist;
 } genobject;
 
+#ifdef STACKLESS
+PyObject *
+PyGenerator_New(PyFrameObject *f)
+#define gen_new PyGenerator_New
+#else
 static PyObject *
 gen_new(PyFrameObject *f)
+#endif
 {
 	genobject *gen = PyObject_GC_New(genobject, &gentype);
 	if (gen == NULL) {
@@ -188,6 +205,8 @@ gen_dealloc(genobject *gen)
 	Py_DECREF(gen->gi_frame);
 	PyObject_GC_Del(gen);
 }
+
+#ifndef STACKLESS
 
 static PyObject *
 gen_iternext(genobject *gen)
@@ -230,6 +249,8 @@ gen_iternext(genobject *gen)
 	return result;
 }
 
+#endif
+
 static PyObject *
 gen_getiter(PyObject *gen)
 {
@@ -243,7 +264,11 @@ static PyMemberDef gen_memberlist[] = {
 	{NULL}	/* Sentinel */
 };
 
+#ifdef STACKLESS
+PyTypeObject PyGenerator_Type = {
+#else
 static PyTypeObject gentype = {
+#endif
 	PyObject_HEAD_INIT(&PyType_Type)
 	0,					/* ob_size */
 	"generator",				/* tp_name */
@@ -265,14 +290,18 @@ static PyTypeObject gentype = {
 	PyObject_GenericGetAttr,		/* tp_getattro */
 	0,					/* tp_setattro */
 	0,					/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,/* tp_flags */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC, /* tp_flags */
  	0,					/* tp_doc */
  	(traverseproc)gen_traverse,		/* tp_traverse */
  	0,					/* tp_clear */
 	0,					/* tp_richcompare */
 	offsetof(genobject, gi_weakreflist),	/* tp_weaklistoffset */
 	(getiterfunc)gen_getiter,		/* tp_iter */
+#ifdef STACKLESS
+	(iternextfunc)slp_gen_iternext,		/* tp_iternext */
+#else
 	(iternextfunc)gen_iternext,		/* tp_iternext */
+#endif
 	0,					/* tp_methods */
 	gen_memberlist,				/* tp_members */
 	0,					/* tp_getset */
@@ -280,6 +309,7 @@ static PyTypeObject gentype = {
 	0,					/* tp_dict */
 };
 
+STACKLESS_DECLARE_METHOD(&PyGenerator_Type, tp_iternext)
 
 #ifdef WITH_THREAD
 
@@ -545,6 +575,15 @@ PyEval_EvalCode(PyCodeObject *co, PyObject *globals, PyObject *locals)
 
 /* Interpreter main loop */
 
+#ifdef STACKLESS
+
+PyObject *
+PyEval_EvalFrame(PyFrameObject *f, PyObject *retval)
+{
+	PyThreadState *tstate = PyThreadState_GET();
+
+#else
+
 static PyObject *
 eval_frame(PyFrameObject *f)
 {
@@ -588,6 +627,8 @@ eval_frame(PyFrameObject *f)
 	char *filename;
 #endif
 
+#endif  /* not STACKLESS */
+
 /* Tuple access macros */
 
 #ifndef Py_DEBUG
@@ -624,6 +665,17 @@ eval_frame(PyFrameObject *f)
 #define PREDICTED(op)		PRED_##op: next_instr++
 #define PREDICTED_WITH_ARG(op)	PRED_##op: oparg = (next_instr[2]<<8) + \
 				next_instr[1]; next_instr += 3
+
+#ifdef STACKLESS
+#ifdef STACKLESS_USE_ENDIAN
+
+#undef NEXTARG
+#define NEXTARG()	(next_instr += 2, ((short *)next_instr)[-1])
+#undef PREDICTED_WITH_ARG
+#define PREDICTED_WITH_ARG(op)	PRED_##op: next_instr += 3;  \
+				oparg = ((short *)next_instr)[-1]
+#endif
+#endif
 
 /* Stack manipulation macros */
 
@@ -674,12 +726,17 @@ eval_frame(PyFrameObject *f)
 	if (f == NULL)
 		return NULL;
 
+#ifdef STACKLESS
+	if (CSTACK_SAVE_NOW(tstate, f))
+		return slp_eval_frame_newstack(f, retval);
+#else
 #ifdef USE_STACKCHECK
 	if (tstate->recursion_depth%10 == 0 && PyOS_CheckStack()) {
 		PyErr_SetString(PyExc_MemoryError, "Stack overflow");
 		return NULL;
 	}
 #endif
+#endif /* STACKLESS */
 
 	/* push frame */
 	if (++tstate->recursion_depth > recursion_limit) {
@@ -729,6 +786,80 @@ eval_frame(PyFrameObject *f)
 		}
 	}
 
+#ifdef STACKLESS
+
+	f->f_execute = PyEval_EvalFrame_noval;
+	return PyEval_EvalFrame_value(f, retval);
+}
+
+PyObject *
+PyEval_EvalFrame_noval(PyFrameObject *f, PyObject *retval)
+{
+	/* 
+	 * this function is identical to PyEval_EvalFrame_value.
+	 * it serves as a marker whether we expect a value or
+	 * not, and it makes debugging a little easier.
+	 */
+	return PyEval_EvalFrame_value(f, retval);
+}
+
+PyObject *
+PyEval_EvalFrame_iter(PyFrameObject *f, PyObject *retval)
+{
+	/* 
+	 * this function is identical to PyEval_EvalFrame_value.
+	 * it serves as a marker whether we are inside of a
+	 * for_iter operation. In this case we need to handle
+	 * null without error as valid result.
+	 */
+	return PyEval_EvalFrame_value(f, retval);
+}
+
+PyObject *
+PyEval_EvalFrame_value(PyFrameObject *f, PyObject *retval)
+{
+	/* unfortunately we repeat all the variables here... */
+#ifdef DXPAIRS
+	int lastopcode = 0;
+#endif
+	PyObject **stack_pointer; /* Next free slot in value stack */
+	register unsigned char *next_instr;
+	register int opcode=0;	/* Current opcode */
+	register int oparg=0;	/* Current opcode argument, if any */
+	register enum why_code why; /* Reason for block stack unwind */
+	register int err;	/* Error status -- nonzero if error */
+	register PyObject *x;	/* Result object -- NULL if error */
+	register PyObject *v;	/* Temporary objects popped off stack */
+	register PyObject *w;
+	register PyObject *u;
+	register PyObject *t;
+	register PyObject *stream = NULL;	 /* for PRINT opcodes */
+	register PyObject **fastlocals, **freevars;
+	PyThreadState *tstate = PyThreadState_GET();
+	PyCodeObject *co;
+
+	/* when tracing we set things up so that 
+
+               not (instr_lb <= current_bytecode_offset < instr_ub)
+
+	   is true when the line being executed has changed.  The 
+           initial values are such as to make this false the first
+           time it is tested. */
+	int instr_ub = -1, instr_lb = 0;
+
+	unsigned char *first_instr;
+	PyObject *names;
+	PyObject *consts;
+#ifdef LLTRACE
+	int lltrace;
+#endif
+#if defined(Py_DEBUG) || defined(LLTRACE)
+	/* Make it easier to find out where we are with a debugger */
+	char *filename;
+#endif
+
+#endif /* STACKLESS */
+
 	co = f->f_code;
 	names = co->co_names;
 	consts = co->co_consts;
@@ -760,6 +891,58 @@ eval_frame(PyFrameObject *f)
 	x = Py_None;	/* Not a reference, just anything non-NULL */
 	w = NULL;
 
+#ifdef STACKLESS
+	if (f->f_execute == PyEval_EvalFrame_value) {
+        /* this is a return */
+		PUSH(retval); /* we are back from a function call */
+	}
+	else {
+		if (f->f_execute == PyEval_EvalFrame_iter) {
+			/* finalise the for_iter operation */
+			opcode = NEXTOP();
+			oparg = NEXTARG();
+			if (opcode == EXTENDED_ARG) {
+				opcode = NEXTOP();
+				oparg = oparg<<16 | NEXTARG();
+			}
+			assert(opcode == FOR_ITER);
+
+			if (retval != NULL) {
+				PUSH(retval);
+			}
+			else if (!PyErr_Occurred()) {
+				/* iterator ended normally */
+				retval = POP();
+				Py_DECREF(retval);
+				/* perform the delayed block jump */
+				JUMPBY(oparg);
+			}
+			else if (PyErr_ExceptionMatches(PyExc_StopIteration)) {
+				/* we need to check for stopiteration because
+				 * somebody might inject this as a real
+				 * exception.
+				 */
+				PyErr_Clear();
+				retval = POP();
+				Py_DECREF(retval);
+				JUMPBY(oparg);
+			}
+		}
+		else {
+			/* don't push it, frame ignores value */
+			Py_XDECREF(retval);
+		}
+		f->f_execute = PyEval_EvalFrame_value;
+	}
+
+	/* always check for an error flag */
+	if (retval == NULL) {
+		why = WHY_EXCEPTION;
+		goto on_error;
+	}
+
+#endif
+
 	for (;;) {
 		assert(stack_pointer >= f->f_valuestack); /* else underflow */
 		assert(STACK_LEVEL() <= f->f_stacksize);  /* else overflow */
@@ -778,6 +961,29 @@ eval_frame(PyFrameObject *f)
                                    a try: finally: block uninterruptable. */
                                 goto fast_next_opcode;
                         }
+#ifdef STACKLESS
+			if (tstate->st.interrupt &&
+			    !tstate->curexc_type) {
+				int ticks = _Py_CheckInterval - _Py_Ticker;
+				int mt = tstate->st.ticker -= ticks;
+				if (mt <= 0) {
+					PyObject *ires;
+					ires = tstate->st.interrupt();
+					if (ires == NULL) {
+						why = WHY_EXCEPTION;
+						goto on_error;
+
+					}
+					else if (STACKLESS_UNWINDING(ires)) {
+						goto stackless_interrupt_call;
+					}
+					/* hard switch, drop value */
+					Py_DECREF(ires);
+				}
+			}
+
+			/* standard ticker code */
+#endif
 			_Py_Ticker = _Py_CheckInterval;
 			tstate->tick_counter++;
 			if (things_to_do) {
@@ -1872,19 +2078,19 @@ eval_frame(PyFrameObject *f)
 					break;
 				if (oparg < f->f_ncells) {
 					v = PyTuple_GetItem(co->co_cellvars,
-							       oparg);
-				       format_exc_check_arg(
-					       PyExc_UnboundLocalError,
-					       UNBOUNDLOCAL_ERROR_MSG,
-					       v);
+							    oparg);
+					format_exc_check_arg(
+						PyExc_UnboundLocalError,
+						UNBOUNDLOCAL_ERROR_MSG,
+						v);
 				} else {
-				       v = PyTuple_GetItem(
-						      co->co_freevars,
-						      oparg - f->f_ncells);
-				       format_exc_check_arg(
-					       PyExc_NameError,
-					       UNBOUNDFREE_ERROR_MSG,
-					       v);
+					v = PyTuple_GetItem(
+							co->co_freevars,
+							oparg - f->f_ncells);
+					format_exc_check_arg(
+						PyExc_NameError,
+						UNBOUNDFREE_ERROR_MSG,
+						v);
 				}
 				break;
 			}
@@ -2088,7 +2294,16 @@ eval_frame(PyFrameObject *f)
 		case FOR_ITER:
 			/* before: [iter]; after: [iter, iter()] *or* [] */
 			v = TOP();
+#ifdef STACKLESS
+			STACKLESS_PROPOSE_ALL();
 			x = PyIter_Next(v);
+			STACKLESS_ASSERT();
+			if (STACKLESS_UNWINDING(x))
+				goto stackless_iter;
+stackless_iter_return:
+#else
+			x = PyIter_Next(v);
+#endif
 			if (x != NULL) {
 				PUSH(x);
 				PREDICT(STORE_FAST);
@@ -2114,6 +2329,12 @@ eval_frame(PyFrameObject *f)
 		case CALL_FUNCTION:
 			PCALL(PCALL_ALL);
 			x = call_function(&stack_pointer, oparg);
+#ifdef STACKLESS
+			if (STACKLESS_UNWINDING(x)) {
+				goto stackless_call;
+			}
+stackless_call_return:
+#endif
 			PUSH(x);
 			if (x != NULL)
 				continue;
@@ -2155,6 +2376,11 @@ eval_frame(PyFrameObject *f)
 			    w = POP();
 			    Py_DECREF(w);
 		    }
+#ifdef STACKLESS
+		    if (STACKLESS_UNWINDING(x)) {
+			    goto stackless_call;
+		    }
+#endif
 		    PUSH(x);
 		    if (x != NULL)
 			    continue;
@@ -2430,8 +2656,59 @@ eval_frame(PyFrameObject *f)
 	/* pop frame */
 	--tstate->recursion_depth;
 	tstate->frame = f->f_back;
+#ifndef STACKLESS
 
 	return retval;
+
+#else
+	Py_DECREF(f);
+	return retval;
+
+stackless_iter:
+	/* restore this opcode and enable frame to handle it */
+	f->f_execute = PyEval_EvalFrame_iter;
+	next_instr -= (oparg >> 16) ? 6 : 3;
+
+stackless_call:
+	retval = x;
+	/* 
+	 * keep the reference to the frame to be called.
+	 */
+	f->f_stacktop = stack_pointer;
+
+	/* the -1 is to adjust for the f_lasti change.
+	   (look for the word 'Promise' above) */
+	f->f_lasti = INSTR_OFFSET() - 1;
+	if (tstate->frame->f_back != f)
+		return retval;
+	STACKLESS_UNPACK(retval);
+	retval = tstate->frame->f_execute(tstate->frame, retval);
+	if (tstate->frame != f)
+		return retval;
+	if (STACKLESS_UNWINDING(retval))
+		STACKLESS_UNPACK(retval);
+
+	x = retval;
+	f->f_stacktop = NULL;
+	if (f->f_execute == PyEval_EvalFrame_iter) {
+		next_instr += (oparg >> 16) ? 6 : 3;
+		f->f_execute = PyEval_EvalFrame_value;
+			goto stackless_iter_return;
+	}
+
+	goto stackless_call_return;
+
+stackless_interrupt_call:
+
+	f->f_execute = PyEval_EvalFrame_noval;
+	f->f_stacktop = stack_pointer;
+
+	/* the -1 is to adjust for the f_lasti change.
+	   (look for the word 'Promise' above) */
+	f->f_lasti = INSTR_OFFSET() - 1;
+	f = tstate->frame;
+   	return (PyObject *) Py_UnwindToken;
+#endif
 }
 
 PyObject *
@@ -2439,6 +2716,7 @@ PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
 	   PyObject **args, int argcount, PyObject **kws, int kwcount,
 	   PyObject **defs, int defcount, PyObject *closure)
 {
+	STACKLESS_GETARG();
 	register PyFrameObject *f;
 	register PyObject *retval = NULL;
 	register PyObject **fastlocals, **freevars;
@@ -2455,6 +2733,10 @@ PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
 	f = PyFrame_New(tstate, co, globals, locals);
 	if (f == NULL)
 		return NULL;
+
+#ifdef STACKLESS
+	f->f_execute = PyEval_EvalFrame;
+#endif
 
 	fastlocals = f->f_localsplus;
 	freevars = f->f_localsplus + f->f_nlocals;
@@ -2660,7 +2942,26 @@ PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
 		return gen_new(f);
 	}
 
+#ifdef STACKLESS
+	Py_INCREF(Py_None);
+	retval = Py_None;
+	if (stackless) {
+		tstate->frame = f;
+		return STACKLESS_PACK(retval);
+	}
+	else {
+		if (f->f_back != NULL)
+			/* use the faster path */
+			retval = slp_frame_dispatch(f, f->f_back, retval);
+        	else {
+			Py_DECREF(retval);
+			retval = slp_eval_frame(f);
+		}
+		return retval;
+	}
+#else
         retval = eval_frame(f);
+#endif
 
   fail: /* Jump here from prelude on failure */
 
@@ -3252,8 +3553,18 @@ PyObject *
 PyEval_GetGlobals(void)
 {
 	PyFrameObject *current_frame = PyEval_GetFrame();
+#ifdef STACKLESS
+	if (current_frame == NULL) {
+		PyThreadState *ts = PyThreadState_GET();
+
+		if (ts->st.current != NULL)
+			return ts->st.current->def_globals;
+		return NULL;
+	}
+#else
 	if (current_frame == NULL)
 		return NULL;
+#endif
 	else
 		return current_frame->f_globals;
 }
@@ -3324,6 +3635,7 @@ PyEval_CallObject(PyObject *func, PyObject *arg)
 PyObject *
 PyEval_CallObjectWithKeywords(PyObject *func, PyObject *arg, PyObject *kw)
 {
+	STACKLESS_GETARG();
 	PyObject *result;
 
 	if (arg == NULL)
@@ -3343,7 +3655,9 @@ PyEval_CallObjectWithKeywords(PyObject *func, PyObject *arg, PyObject *kw)
 		return NULL;
 	}
 
+	STACKLESS_PROMOTE_ALL();
 	result = PyObject_Call(func, arg, kw);
+	STACKLESS_ASSERT();
 	Py_DECREF(arg);
 	return result;
 }
@@ -3421,6 +3735,7 @@ call_function(PyObject ***pp_stack, int oparg)
 		if (flags & (METH_NOARGS | METH_O)) {
 			PyCFunction meth = PyCFunction_GET_FUNCTION(func);
 			PyObject *self = PyCFunction_GET_SELF(func);
+			STACKLESS_PROPOSE_FLAG(flags & METH_STACKLESS);
 			if (flags & METH_NOARGS && na == 0) 
 				x = (*meth)(self, NULL);
 			else if (flags & METH_O && na == 1) {
@@ -3429,6 +3744,7 @@ call_function(PyObject ***pp_stack, int oparg)
 				Py_DECREF(arg);
 			}
 			else {
+				STACKLESS_RETRACT();
 				err_args(func, flags, na);
 				x = NULL;
 			}
@@ -3436,9 +3752,11 @@ call_function(PyObject ***pp_stack, int oparg)
 		else {
 			PyObject *callargs;
 			callargs = load_args(pp_stack, na);
+			STACKLESS_PROPOSE_ALL();
 			x = PyCFunction_Call(func, callargs, NULL);
 			Py_XDECREF(callargs); 
 		} 
+		STACKLESS_ASSERT();
 	} else {
 		if (PyMethod_Check(func) && PyMethod_GET_SELF(func) != NULL) {
 			/* optimize access to bound methods */
@@ -3515,7 +3833,18 @@ fast_function(PyObject *func, PyObject ***pp_stack, int n, int na, int nk)
 			Py_INCREF(*stack);
 			fastlocals[i] = *stack++;
 		}
+#ifdef STACKLESS
+		f->f_execute = PyEval_EvalFrame;
+		if (slp_enable_softswitch) {
+			Py_INCREF(Py_None);
+			retval = Py_None;
+			tstate->frame = f;
+			return STACKLESS_PACK(retval);
+		}
+		return slp_eval_frame(f);
+#else
 		retval = eval_frame(f);
+#endif
 		assert(tstate != NULL);
 		++tstate->recursion_depth;
 		Py_DECREF(f);
@@ -3526,6 +3855,7 @@ fast_function(PyObject *func, PyObject ***pp_stack, int n, int na, int nk)
 		d = &PyTuple_GET_ITEM(argdefs, 0);
 		nd = ((PyTupleObject *)argdefs)->ob_size;
 	}
+	STACKLESS_PROPOSE_ALL();
 	return PyEval_EvalCodeEx(co, globals,
 				 (PyObject *)NULL, (*pp_stack)-n, na,
 				 (*pp_stack)-2*nk, nk, d, nd,
@@ -3641,8 +3971,11 @@ do_call(PyObject *func, PyObject ***pp_stack, int na, int nk)
 	else
 		PCALL(PCALL_OTHER);
 #endif
+	STACKLESS_PROPOSE(func);
 	result = PyObject_Call(func, callargs, kwdict);
- call_fail:
+	STACKLESS_ASSERT();
+
+call_fail:
 	Py_XDECREF(callargs);
 	Py_XDECREF(kwdict);
 	return result;
@@ -3710,8 +4043,11 @@ ext_do_call(PyObject *func, PyObject ***pp_stack, int flags, int na, int nk)
 	else
 		PCALL(PCALL_OTHER);
 #endif
+	STACKLESS_PROPOSE(func);
 	result = PyObject_Call(func, callargs, kwdict);
-      ext_call_fail:
+	STACKLESS_ASSERT();
+
+ext_call_fail:
 	Py_XDECREF(callargs);
 	Py_XDECREF(kwdict);
 	Py_XDECREF(stararg);

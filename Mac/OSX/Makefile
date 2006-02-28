@@ -5,7 +5,7 @@
 VERSION=2.3
 builddir = ../..
 srcdir = ../..
-prefix=/Library/Frameworks/Python.framework/Versions/$(VERSION)
+prefix=/Library/Frameworks/Stackless.framework/Versions/$(VERSION)
 LIBDEST=$(prefix)/lib/python$(VERSION)
 BUILDPYTHON=$(builddir)/python.exe
 DESTDIR=
@@ -17,7 +17,7 @@ PBXBUILD=xcodebuild
 
 # These are normally glimpsed from the previous set
 bindir=/usr/local/bin
-PYTHONAPPSPATH=/Applications/MacPython-$(VERSION)
+PYTHONAPPSPATH=/Applications/Stackless-$(VERSION)
 PYTHONAPPSDIR=$(PYTHONAPPSPATH)
 APPINSTALLDIR=$(prefix)/Resources/Python.app
 
@@ -41,7 +41,7 @@ STRIPFLAG=-s
 ##DEFINES=
 ##
 ##CFLAGS=$(OPT) $(DEFINES) $(INCLUDES)
-##LDFLAGS=-F$(builddir) -framework System -framework Python -framework Carbon \
+##LDFLAGS=-F$(builddir) -framework System -framework Stackless -framework Carbon \
 ##	-framework Foundation
 ##CC=cc
 ##LD=cc

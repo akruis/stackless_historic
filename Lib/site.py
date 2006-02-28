@@ -177,13 +177,15 @@ for prefix in prefixes:
             # for framework builds *only* we add the standard Apple
             # locations. Currently only per-user, but /Library and
             # /Network/Library could be added too
-            if 'Python.framework' in prefix:
+            if '.framework' in prefix:
                 home = os.environ.get('HOME')
                 if home:
+                    fmwkname = prefix[:prefix.find('.framework')]
+                    fmwkname = fmwkname.split(os.sep)[-1]
                     sitedirs.append(
                         os.path.join(home,
                                      'Library',
-                                     'Python',
+                                     fmwkname,
                                      sys.version[:3],
                                      'site-packages'))
         for sitedir in sitedirs:

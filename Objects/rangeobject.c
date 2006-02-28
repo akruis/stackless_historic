@@ -224,7 +224,12 @@ typedef struct {
 	long	len;
 } rangeiterobject;
 
+#ifdef STACKLESS
+PyTypeObject PyRangeIter_Type;
+#define Pyrangeiter_Type PyRangeIter_Type
+#else
 static PyTypeObject Pyrangeiter_Type;
+#endif
 
 static PyObject *
 range_iter(PyObject *seq)
@@ -253,7 +258,11 @@ rangeiter_next(rangeiterobject *r)
 	return NULL;
 }
 
+#ifdef STACKLESS
+PyTypeObject PyRangeIter_Type = {
+#else
 static PyTypeObject Pyrangeiter_Type = {
+#endif
 	PyObject_HEAD_INIT(&PyType_Type)
 	0,                                      /* ob_size */
 	"rangeiterator",                        /* tp_name */

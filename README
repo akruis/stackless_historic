@@ -312,6 +312,23 @@ Solaris: When using Sun's C compiler with threads, at least on Solaris
 	4. Modify the installed GCC specs file, adding -R options into the
 	   *link: section.
 
+	When the dynamic loader complains about errors finding shared
+	libraries, such as
+
+	ld.so.1: ./python: fatal: libstdc++.so.5: open failed: 
+	No such file or directory 
+
+	you need to first make sure that the library is available on
+	your system. Then, you need to instruct the dynamic loader how
+	to find it. You can chose any of the following strategies:
+
+	1. When compiling Python, set LD_RUN_PATH to the directories
+	   containing missing libraries.
+	2. When running Python, set LD_LIBRARY_PATH to these directories.
+	3. Use crle(8) to extend the search path of the loader.
+	4. Modify the installed GCC specs file, adding -R options into the
+	   *link: section.
+
 Linux:  A problem with threads and fork() was tracked down to a bug in
 	the pthreads code in glibc version 2.0.5; glibc version 2.0.7
 	solves the problem.  This causes the popen2 test to fail;
@@ -529,8 +546,8 @@ MacOSX: The tests will crash on both 10.1 and 10.2 with SEGV in
         test_re and test_sre due to the small default stack size.  If
         you set the stack size to 2048 before doing a "make test" the
         failure can be avoided.  If you're using the tcsh (the default
-        on OSX), or csh shells use "limit stacksize 2048" and for the
-        bash shell, use "ulimit -s 2048".
+        on OSX), or csh shells use "limit stacksize 2048"; for the
+        bash or zsh shells, use "ulimit -s 2048".
 
         On naked Darwin you may want to add the configure option
         "--disable-toolbox-glue" to disable the glue code for the Carbon
