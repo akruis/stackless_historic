@@ -19,6 +19,7 @@ CFG=pythoncore - Win32 Release
 !MESSAGE 
 !MESSAGE "pythoncore - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "pythoncore - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "pythoncore - Win32 ReleaseOff" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE 
 
 # Begin Project
@@ -44,11 +45,11 @@ RSC=rc.exe
 # PROP Target_Dir ""
 F90=df.exe
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /Zi /O2 /I "..\Include" /I "..\PC" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_DL_EXPORT" /YX /FD /Zm200 /c
+# ADD CPP /nologo /MD /W3 /GX /Zi /O2 /I "..\Include" /I "..\PC" /I "..\Stackless" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_DL_EXPORT" /FAcs /YX /FD /Zm200 /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o /win32 "NUL"
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o /win32 "NUL"
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
-# ADD RSC /l 0x409 /i "..\Include" /d "NDEBUG"
+# ADD RSC /l 0x409 /i "..\Include" /i "..\Stackless" /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -71,12 +72,13 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 F90=df.exe
+# ADD F90 /browser
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\Include" /I "..\PC" /D "_DEBUG" /D "USE_DL_EXPORT" /D "WIN32" /D "_WINDOWS" /YX /FD /Zm200 /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\Include" /I "..\PC" /I "..\Stackless" /D "_DEBUG" /D "USE_DL_EXPORT" /D "WIN32" /D "_WINDOWS" /FAcs /FR /YX /FD /Zm200 /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o /win32 "NUL"
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o /win32 "NUL"
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409 /i "..\Include" /d "_DEBUG"
+# ADD RSC /l 0x409 /i "..\Include" /i "..\Stackless" /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -85,12 +87,187 @@ LINK32=link.exe
 # ADD LINK32 largeint.lib kernel32.lib user32.lib advapi32.lib shell32.lib /nologo /base:"0x1e000000" /subsystem:windows /dll /debug /machine:I386 /nodefaultlib:"libc" /out:"./python23_d.dll" /pdbtype:sept
 # SUBTRACT LINK32 /pdb:none
 
+!ELSEIF  "$(CFG)" == "pythoncore - Win32 ReleaseOff"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "pythoncore___Win32_ReleaseOff"
+# PROP BASE Intermediate_Dir "pythoncore___Win32_ReleaseOff"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "off"
+# PROP Intermediate_Dir "x86-temp-releaseOff\pythoncore"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+F90=df.exe
+# ADD BASE CPP /nologo /MD /W3 /GX /Zi /O2 /I "..\Include" /I "..\PC" /I "..\Stackless" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_DL_EXPORT" /FAcs /YX /FD /Zm200 /c
+# ADD CPP /nologo /MD /W3 /GX /Zi /O2 /I "..\Include" /I "..\PC" /I "..\Stackless" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USE_DL_EXPORT" /D "STACKLESS_OFF" /FAcs /YX /FD /Zm200 /c
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o /win32 "NUL"
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o /win32 "NUL"
+# ADD BASE RSC /l 0x409 /i "..\Include" /i "..\Stackless" /d "NDEBUG"
+# ADD RSC /l 0x409 /i "..\Include" /i "..\Stackless" /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 largeint.lib kernel32.lib user32.lib advapi32.lib shell32.lib /nologo /base:"0x1e000000" /subsystem:windows /dll /debug /machine:I386 /nodefaultlib:"libc" /out:"./python23.dll"
+# SUBTRACT BASE LINK32 /pdb:none
+# ADD LINK32 largeint.lib kernel32.lib user32.lib advapi32.lib shell32.lib /nologo /base:"0x1e000000" /subsystem:windows /dll /debug /machine:I386 /nodefaultlib:"libc" /out:"./off/python23.dll"
+# SUBTRACT LINK32 /pdb:none
+
 !ENDIF 
 
 # Begin Target
 
 # Name "pythoncore - Win32 Release"
 # Name "pythoncore - Win32 Debug"
+# Name "pythoncore - Win32 ReleaseOff"
+# Begin Group "stackless"
+
+# PROP Default_Filter ""
+# Begin Group "module"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\Stackless\core\backwardcompat.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\channelobject.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\channelobject.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\flextype.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\flextype.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\scheduling.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\stacklessmodule.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\taskletobject.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\module\taskletobject.h
+# End Source File
+# End Group
+# Begin Group "core"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\Stackless\core\cframeobject.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\core\slp_transfer.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\core\stackless_impl.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\core\stackless_methods.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\core\stackless_structs.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\core\stackless_tstate.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\core\stackless_util.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\core\stacklesseval.c
+# End Source File
+# End Group
+# Begin Group "platf"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\Stackless\platf\slp_platformselect.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\platf\switch_ppc_macosx.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\platf\switch_ppc_unix.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\platf\switch_s390_unix.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\platf\switch_sparc_sun_gcc.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\platf\switch_x86_msvc.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\platf\switch_x86_unix.h
+# End Source File
+# End Group
+# Begin Group "pickling"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\Stackless\pickling\prickelpit.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\pickling\prickelpit.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\pickling\safe_pickle.c
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=..\Stackless\readme.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\stackless.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\stackless_api.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Stackless\stackless_version.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=..\Modules\_codecsmodule.c
@@ -194,6 +371,10 @@ SOURCE=..\Modules\cStringIO.c
 # Begin Source File
 
 SOURCE=..\Objects\descrobject.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Include\descrobject.h
 # End Source File
 # Begin Source File
 

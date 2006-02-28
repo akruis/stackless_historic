@@ -216,6 +216,18 @@ Package=<4>
 
 ###############################################################################
 
+Project: "pyghostscript"="..\..\..\..\..\projects\PharmaControl\pyghostscript-0.1\pyghostscript.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "python"=.\python.dsp - Package Owner=<4>
 
 Package=<5>
@@ -272,6 +284,18 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name pythoncore
     End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "testbench"=..\Stackless\testbench\testbench.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################
