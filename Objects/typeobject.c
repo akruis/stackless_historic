@@ -4948,13 +4948,13 @@ typedef struct wrapperbase slotdef;
 
 #define TPSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
 	{NAME, offsetof(PyTypeObject, SLOT), (void *)(FUNCTION), WRAPPER, \
-	 PyDoc_STR(DOC), HEAPOFF(SLOT)}
+	 PyDoc_STR(DOC), 0, 0, HEAPOFF(SLOT)}
 #define FLSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC, FLAGS) \
 	{NAME, offsetof(PyTypeObject, SLOT), (void *)(FUNCTION), WRAPPER, \
-	 PyDoc_STR(DOC), HEAPOFF(SLOT), FLAGS}
+	 PyDoc_STR(DOC), FLAGS, 0, HEAPOFF(SLOT)}
 #define ETSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC, SLPSLOT) \
 	{NAME, offsetof(PyHeapTypeObject, SLOT), (void *)(FUNCTION), WRAPPER, \
-	 PyDoc_STR(DOC), HEAPOFF(SLPSLOT)}
+	 PyDoc_STR(DOC), 0, 0, HEAPOFF(SLPSLOT)}
 
 #define SQSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
 	ETSLOT(NAME, as_sequence.SLOT, FUNCTION, WRAPPER, DOC, SLOT)
