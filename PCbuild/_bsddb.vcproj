@@ -4,7 +4,9 @@
 	Version="7.10"
 	Name="_bsddb"
 	SccProjectName="_bsddb"
-	SccLocalPath="..">
+	SccAuxPath=""
+	SccLocalPath=".."
+	SccProvider="MSSCCI:Perforce SCM">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
