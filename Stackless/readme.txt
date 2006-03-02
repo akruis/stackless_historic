@@ -1,5 +1,44 @@
-This text should be reworked.
-Just modified for cvs test.
+A small update as of 2006-03-01
+
+Meanwhile a long time has passed since the initial Stackless
+version which was from 1999 somehwere.
+
+In 2003, the fabulous PyPy porject was started, which is still
+performing very well. I have implemented Stackless for PyPy
+(with lots of support from Armin), and it is so incredibly
+much nicer. No more fiddling with existing calling conventions,
+no compromizes, everything that needs to be stackless also is.
+
+Unfortuantely, PyPy is still not fast and complete enough to
+take over. This means, my users are still whining for an update
+all the time CPython gets an update.
+And maintaining this code gets more and more a nightmare for
+me, since I have the nice PyPy version, and I hate hacking this
+clumsy C code again and again.
+
+One nice thing to record here is the fact that CCPGames is now
+supporting me eahily. Not by sponsorship (which doesn't help
+very much, since money can hardly help with the pain of
+porting), but they really stepped in and ported Stackless for
+Python 2.4.2. I was involved quite much, but mainly giving hints
+and finding bugs. I hope very much that I can leave this maintenance
+work to them in the future.
+
+One thing that I might do anyway is back-porting the new coroutine
+interface. It is even smaller than greenlets and probably the
+very minimum possible. It would make sense to build this into
+Stackless to get rid of some early design decisions. Anyway, this
+has to wait until the PyPy version is stabilized and had some
+revisions.
+
+Having said all this, the description of current stackless is
+still not there, and the following old text is no longer the
+truth, since much more was done.
+Especially, the abandonship was undone, and Stackless is now
+at version 3.1, which is a quite complicated merger between
+the 1.0 and 2.0 designes, supporting both cooperative switching
+and stack switching, with the addition of partially complete
+support for real OS threads as a tasklet. Phew.
 
   Introduction to the ideas of the new Stackless Python
   Draft, CT 20020122
@@ -45,7 +84,7 @@ Just modified for cvs test.
   especially from Guido. At that time I was really disappointed, and
   it took some time to understand that his reaction was absolutely
   correct. The code was simply too tricky and complicated, and the
-  implementation effort necessary toget complete stacklessness was high.
+  implementation effort necessary to get complete stacklessness was high.
   Also, I was too much bound to the incredible concept of continuations,
   which finally killed my success.
 
@@ -64,7 +103,7 @@ Just modified for cvs test.
   break out was a complete redesign, based upon assembly callbacks only.
   Fortunately, my brain recovers quickly from such events. Years of
   thinking cannot be replaced by quick thoughts, and well-thought concepts
-  are immutable against quick minds.
+  are immutable against quick mind changes.
 
   Nevertheless, an eternal problem was the impossibility to make Python
   really completely stackless. This impossibility was produced by myself,
