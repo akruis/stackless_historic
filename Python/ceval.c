@@ -670,10 +670,10 @@ eval_frame(PyFrameObject *f)
 #ifdef STACKLESS_USE_ENDIAN
 
 #undef NEXTARG
-#define NEXTARG()	(next_instr += 2, ((short *)next_instr)[-1])
+#define NEXTARG()	(next_instr += 2, ((unsigned short *)next_instr)[-1])
 #undef PREDICTED_WITH_ARG
 #define PREDICTED_WITH_ARG(op)	PRED_##op: next_instr += 3;  \
-				oparg = ((short *)next_instr)[-1]
+				oparg = ((unsigned short *)next_instr)[-1]
 #endif
 #endif
 
