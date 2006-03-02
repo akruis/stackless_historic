@@ -18,7 +18,7 @@
 
 #include <ctype.h>
 
-#ifndef WITH_TSC 
+#ifndef WITH_TSC
 #define rdtscll(var)
 #else /*WITH_TSC defined*/
 
@@ -41,7 +41,7 @@ ppc_getcounter(uint64 *v)
 	asm volatile ("mftbu %0" : "=r" (tbu2));
 	if (__builtin_expect(tbu != tbu2, 0)) goto loop;
 
-	/* The slightly peculiar way of writing the next lines is 
+	/* The slightly peculiar way of writing the next lines is
 	   compiled better by GCC than any other way I tried. */
 	((long*)(v))[0] = tbu;
 	((long*)(v))[1] = tb;
@@ -53,7 +53,7 @@ ppc_getcounter(uint64 *v)
 
 #endif
 
-void dump_tsc(int opcode, int ticked, uint64 inst0, uint64 inst1, 
+void dump_tsc(int opcode, int ticked, uint64 inst0, uint64 inst1,
 	      uint64 loop0, uint64 loop1, uint64 intr0, uint64 intr1)
 {
 	uint64 intr, inst, loop;
@@ -560,7 +560,7 @@ PyEval_EvalFrame(PyFrameObject *f)
    inst0 -- beginning of switch statement for opcode dispatch
    inst1 -- end of switch statement (may be skipped)
    loop0 -- the top of the mainloop
-   loop1 -- place where control returns again to top of mainloop 
+   loop1 -- place where control returns again to top of mainloop
             (may be skipped)
    intr1 -- beginning of long interruption
    intr2 -- end of long interruption
@@ -638,10 +638,11 @@ PyEval_EvalFrame(PyFrameObject *f)
 #ifdef STACKLESS_USE_ENDIAN
 
 #undef NEXTARG
-#define NEXTARG()	(next_instr += 2, ((short *)next_instr)[-1])
+#define NEXTARG()	(next_instr += 2, ((unsigned short *)next_instr)[-1])
 #undef PREDICTED_WITH_ARG
 #define PREDICTED_WITH_ARG(op)	PRED_##op: next_instr += 3;  \
-				oparg = ((short *)next_instr)[-1]
+				oparg = ((unsigned short *)next_instr)[-1]
+
 #endif
 #endif
 
@@ -751,7 +752,7 @@ exit_eval_frame:
 PyObject *
 PyEval_EvalFrame_noval(PyFrameObject *f, PyObject *retval)
 {
-	/* 
+	/*
 	 * this function is identical to PyEval_EvalFrame_value.
 	 * it serves as a marker whether we expect a value or
 	 * not, and it makes debugging a little easier.
@@ -762,7 +763,7 @@ PyEval_EvalFrame_noval(PyFrameObject *f, PyObject *retval)
 PyObject *
 PyEval_EvalFrame_iter(PyFrameObject *f, PyObject *retval)
 {
-	/* 
+	/*
 	 * this function is identical to PyEval_EvalFrame_value.
 	 * it serves as a marker whether we are inside of a
 	 * for_iter operation. In this case we need to handle
@@ -2712,7 +2713,7 @@ stackless_iter:
 
 stackless_call:
 	retval = x;
-	/* 
+	/*
 	 * keep the reference to the frame to be called.
 	 */
 	f->f_stacktop = stack_pointer;
@@ -4411,7 +4412,7 @@ build_class(PyObject *methods, PyObject *bases, PyObject *name)
 	result = PyObject_CallFunction(metaclass, "OOO", name, bases, methods);
 	Py_DECREF(metaclass);
 	if (result == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-		/* A type error here likely means that the user passed 
+		/* A type error here likely means that the user passed
 		   in a base that was not a class (such the random module
 		   instead of the random.random type).  Help them out with
 		   by augmenting the error message with more information.*/
@@ -4551,7 +4552,7 @@ string_concatenate(PyObject *v, PyObject *w,
 {
 	/* This function implements 'variable += expr' when both arguments
 	   are strings. */
-	
+
 	if (v->ob_refcnt == 2) {
 		/* In the common case, there are 2 references to the value
 		 * stored in 'variable' when the += is performed: one on the
