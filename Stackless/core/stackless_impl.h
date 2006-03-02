@@ -174,6 +174,9 @@ PyAPI_DATA(PyTypeObject) PyMethodWrapper_Type;
 #define STACKLESS_PROPOSE_FLAG(flag) {int stackless = slp_enable_softswitch; \
 				      STACKLESS_PROMOTE_FLAG(flag);}
 
+#define STACKLESS_PROPOSE_METHOD(obj, meth) {int stackless = slp_enable_softswitch; \
+				 STACKLESS_PROMOTE_METHOD(obj, meth);}
+
 #define STACKLESS_PROPOSE_ALL() slp_try_stackless = slp_enable_softswitch;
 
 #define STACKLESS_RETRACT() slp_try_stackless = 0;

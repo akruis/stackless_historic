@@ -2306,9 +2306,11 @@ PyEval_EvalFrame_value(PyFrameObject *f, PyObject *retval)
 			/* before: [iter]; after: [iter, iter()] *or* [] */
 			v = TOP();
 #ifdef STACKLESS
-			STACKLESS_PROMOTE_METHOD(v, tp_iternext);
-			x = (*v->ob_type->tp_iternext)(v);
-			STACKLESS_ASSERT();
+			{
+			    STACKLESS_PROPOSE_METHOD(v, tp_iternext);
+			    x = (*v->ob_type->tp_iternext)(v);
+			    STACKLESS_ASSERT();
+			}
 			if (STACKLESS_UNWINDING(x))
 				goto stackless_iter;
 stackless_iter_return:
