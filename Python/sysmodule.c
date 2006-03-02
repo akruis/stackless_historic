@@ -650,6 +650,10 @@ sys_getframe(PyObject *self, PyObject *args)
 
 	while (depth > 0 && f != NULL) {
 		f = f->f_back;
+#ifdef STACKLESS
+		if (f != NULL && !PyFrame_Check(f))
+			continue;
+#endif
 		--depth;
 	}
 	if (f == NULL) {

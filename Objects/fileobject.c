@@ -128,6 +128,25 @@ fill_file_fields(PyFileObject *f, FILE *fp, PyObject *name, char *mode,
 	return (PyObject *) f;
 }
 
+#if defined _MSC_VER && _MSC_VER>=1400
+int verify_mode(const char *mode)
+{
+	if (!strlen(mode)) return 1;
+	if (*mode != 'r' && *mode != 'w' && *mode != 'a')
+		goto ERR;
+	mode++;
+	if (*mode == '+')
+		mode++;
+	if (*mode == 'b')
+		mode++;
+	if (!*mode)
+		return 2;
+ERR:
+	PyErr_SetString(PyExc_ValueError, "invalid mode");
+	return 0;
+}
+#endif 
+
 static PyObject *
 open_the_file(PyFileObject *f, char *name, char *mode)
 {
@@ -159,6 +178,10 @@ open_the_file(PyFileObject *f, char *name, char *mode)
 		PyObject *wmode;
 		wmode = PyUnicode_DecodeASCII(mode, strlen(mode), NULL);
 		if (f->f_name && wmode) {
+#if defined _MSC_VER && _MSC_VER >= 1400
+			if (!verify_mode(mode))
+				return NULL; /* c runtime asserts on bad mode, we don't want that. */
+#endif
 			Py_BEGIN_ALLOW_THREADS
 			/* PyUnicode_AS_UNICODE OK without thread
 			   lock as it is a simple dereference. */

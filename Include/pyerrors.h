@@ -25,6 +25,9 @@ PyAPI_FUNC(void) PyErr_NormalizeException(PyObject**, PyObject**, PyObject**);
 
 PyAPI_DATA(PyObject *) PyExc_Exception;
 PyAPI_DATA(PyObject *) PyExc_StopIteration;
+#ifdef STACKLESS
+PyAPI_DATA(PyObject *) PyExc_TaskletExit;
+#endif
 PyAPI_DATA(PyObject *) PyExc_StandardError;
 PyAPI_DATA(PyObject *) PyExc_ArithmeticError;
 PyAPI_DATA(PyObject *) PyExc_LookupError;

@@ -115,8 +115,8 @@ class PyBuildExt(build_ext):
         moddir = os.path.normpath(moddir)
 
         moddirlist = [moddir]
-        incdirlist = ['./Include']
-
+        incdirlist = ['./Include', './Stackless']
+        
         # Platform-dependent module source and include directories
         platform = self.get_platform()
         if platform in ('darwin', 'mac') and ("--disable-toolbox-glue" not in
@@ -385,7 +385,7 @@ class PyBuildExt(build_ext):
 
         # cStringIO and cPickle
         exts.append( Extension('cStringIO', ['cStringIO.c']) )
-        exts.append( Extension('cPickle', ['cPickle.c']) )
+        exts.append( Extension('cPickle', ['cPickle.c', '../Stackless/pickling/safe_pickle.c']) )
 
         # Memory-mapped files (also works on Win32).
         if platform not in ['atheos', 'mac']:

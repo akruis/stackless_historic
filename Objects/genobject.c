@@ -1,5 +1,9 @@
 /* Generator object implementation */
 
+#ifdef STACKLESS
+#include "stackless_impl.h"
+#endif
+
 #include "Python.h"
 #include "frameobject.h"
 #include "genobject.h"
@@ -21,6 +25,10 @@ gen_dealloc(PyGenObject *gen)
 	Py_DECREF(gen->gi_frame);
 	PyObject_GC_Del(gen);
 }
+
+#ifdef STACKLESS
+PyObject *slp_gen_iternext(PyObject *ob);
+#else
 
 static PyObject *
 gen_iternext(PyGenObject *gen)
@@ -63,6 +71,8 @@ gen_iternext(PyGenObject *gen)
 	return result;
 }
 
+#endif
+
 static PyMemberDef gen_memberlist[] = {
 	{"gi_frame",	T_OBJECT, offsetof(PyGenObject, gi_frame),	RO},
 	{"gi_running",	T_INT,    offsetof(PyGenObject, gi_running),	RO},
@@ -98,7 +108,11 @@ PyTypeObject PyGen_Type = {
 	0,					/* tp_richcompare */
 	offsetof(PyGenObject, gi_weakreflist),	/* tp_weaklistoffset */
 	PyObject_SelfIter,			/* tp_iter */
+#ifdef STACKLESS
+	(iternextfunc)slp_gen_iternext,		/* tp_iternext */
+#else
 	(iternextfunc)gen_iternext,		/* tp_iternext */
+#endif
 	0,					/* tp_methods */
 	gen_memberlist,				/* tp_members */
 	0,					/* tp_getset */
@@ -106,8 +120,15 @@ PyTypeObject PyGen_Type = {
 	0,					/* tp_dict */
 };
 
+STACKLESS_DECLARE_METHOD(PyGen_Type, tp_iternext);
+
+#ifdef STACKLESS
+PyObject *
+PyGenerator_New(PyFrameObject *f)
+#else
 PyObject *
 PyGen_New(PyFrameObject *f)
+#endif
 {
 	PyGenObject *gen = PyObject_GC_New(PyGenObject, &PyGen_Type);
 	if (gen == NULL) {

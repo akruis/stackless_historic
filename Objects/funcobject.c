@@ -5,6 +5,7 @@
 #include "compile.h"
 #include "eval.h"
 #include "structmember.h"
+#include "core/stackless_impl.h"
 
 PyObject *
 PyFunction_New(PyObject *code, PyObject *globals)
@@ -511,6 +512,7 @@ func_traverse(PyFunctionObject *f, visitproc visit, void *arg)
 static PyObject *
 function_call(PyObject *func, PyObject *arg, PyObject *kw)
 {
+	STACKLESS_GETARG();
 	PyObject *result;
 	PyObject *argdefs;
 	PyObject **d, **k;
@@ -545,12 +547,14 @@ function_call(PyObject *func, PyObject *arg, PyObject *kw)
 		nk = 0;
 	}
 
+	STACKLESS_PROMOTE_ALL();
 	result = PyEval_EvalCodeEx(
 		(PyCodeObject *)PyFunction_GET_CODE(func),
 		PyFunction_GET_GLOBALS(func), (PyObject *)NULL,
 		&PyTuple_GET_ITEM(arg, 0), PyTuple_Size(arg),
 		k, nk, d, nd,
 		PyFunction_GET_CLOSURE(func));
+	STACKLESS_ASSERT();
 
 	if (k != NULL)
 		PyMem_DEL(k);
@@ -609,6 +613,7 @@ PyTypeObject PyFunction_Type = {
 	func_new,				/* tp_new */
 };
 
+STACKLESS_DECLARE_METHOD(&PyFunction_Type, tp_call)
 
 /* Class method object */
 
