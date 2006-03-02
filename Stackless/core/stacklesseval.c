@@ -28,7 +28,7 @@ int slp_enable_softswitch = 1;
  * The protocol is: This flag may be only set if the called
  * thing supports it. It doesn't matter whether it uses the
  * chance, but it *must* set it to zero before returning.
- * This flags in a way srves as a parameter that we don't have.
+ * This flags in a way serves as a parameter that we don't have.
  */
 int slp_try_stackless = 0;
 
