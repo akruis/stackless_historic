@@ -63,10 +63,10 @@ PyAPI_FUNC(char *) PyEval_GetFuncName(PyObject *);
 PyAPI_FUNC(char *) PyEval_GetFuncDesc(PyObject *);
 
 PyAPI_FUNC(PyObject *) PyEval_GetCallStats(PyObject *);
-#ifdef STACKLESS
-PyAPI_FUNC(PyObject *) PyEval_EvalFrame(struct _frame *, PyObject *retval);
-#else
 PyAPI_FUNC(PyObject *) PyEval_EvalFrame(struct _frame *);
+
+#ifdef STACKLESS
+PyObject * PyEval_EvalFrame_slp(struct _frame *, PyObject *);
 #endif
 
 /* this used to be handled on a per-thread basis - now just two globals */

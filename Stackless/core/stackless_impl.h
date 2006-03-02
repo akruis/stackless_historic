@@ -78,8 +78,8 @@ PyAPI_FUNC(PyObject *) slp_frame_dispatch(PyFrameObject *f,
 PyAPI_FUNC(PyObject *) slp_frame_dispatch_top(PyObject *retval);
 
 /* the now exported eval_frame */
-PyAPI_FUNC(PyObject *) PyEval_EvalFrame(struct _frame *f,
-					PyObject *retval);
+PyAPI_FUNC(PyObject *) PyEval_EvalFrame(struct _frame *f);
+PyObject * PyEval_EvalFrame_slp(struct _frame *, PyObject *);
 
 /* eval_frame with stack overflow, triggered there with a macro */
 PyAPI_FUNC(PyObject *) slp_eval_frame_newstack(struct _frame *f, PyObject *retval);

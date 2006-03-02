@@ -343,7 +343,7 @@ eval_frame_callback(PyFrameObject *f, PyObject *retval)
 	ts->frame = f->f_back;
 	Py_DECREF(f);
 	cur->cstate = NULL;
-	retval = PyEval_EvalFrame(ts->frame, retval);
+	retval = PyEval_EvalFrame_slp(ts->frame, retval);
 	if (retval == NULL)
 		retval = slp_curexc_to_bomb();
 	if (retval == NULL)
@@ -368,7 +368,7 @@ slp_eval_frame_newstack(PyFrameObject *f, PyObject *retval)
 	if (ts->st.cstack_root == NULL) {
 		/* this is a toplevel call */
 		ts->st.cstack_root = STACK_REFPLUS + (intptr_t *) &f;
-		retval = PyEval_EvalFrame(f, retval);
+		retval = PyEval_EvalFrame_slp(f, retval);
 		return retval;
 	}
 
@@ -457,7 +457,7 @@ slp_gen_iternext(PyObject *ob)
 
 	Py_INCREF(Py_None);
 	retval = Py_None;
-	f->f_execute = PyEval_EvalFrame;
+	f->f_execute = PyEval_EvalFrame_slp;
 
 	/* make refcount compatible to frames for tasklet unpickling */
 	Py_INCREF(f->f_back);
