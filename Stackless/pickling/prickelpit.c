@@ -1558,7 +1558,7 @@ dictiter_reduce(dictiterobject *di)
 
 static PyTypeObject wrap_PyDictIterKey_Type;
 
-MAKE_WRAPPERTYPE(PyDictIterKey_Type, dictiterkey, "dictionary-key-iterator",
+MAKE_WRAPPERTYPE(PyDictIterKey_Type, dictiterkey, "dictionary-keyiterator",
 		 dictiterkey_reduce, generic_new, generic_setstate)
 
 static int init_dictiterkeytype(void)
@@ -1570,7 +1570,7 @@ static int init_dictiterkeytype(void)
 
 static PyTypeObject wrap_PyDictIterValue_Type;
 
-MAKE_WRAPPERTYPE(PyDictIterValue_Type, dictitervalue, "dictionary-value-iterator",
+MAKE_WRAPPERTYPE(PyDictIterValue_Type, dictitervalue, "dictionary-valueiterator",
 		 dictitervalue_reduce, generic_new, generic_setstate)
 
 static int init_dictitervaluetype(void)
@@ -1582,7 +1582,7 @@ static int init_dictitervaluetype(void)
 
 static PyTypeObject wrap_PyDictIterItem_Type;
 
-MAKE_WRAPPERTYPE(PyDictIterItem_Type, dictiteritem, "dictionary-item-iterator",
+MAKE_WRAPPERTYPE(PyDictIterItem_Type, dictiteritem, "dictionary-itemiterator",
 		 dictiteritem_reduce, generic_new, generic_setstate)
 
 static int init_dictiteritemtype(void)

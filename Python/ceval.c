@@ -2706,10 +2706,15 @@ fast_yield:
 
 	/* pop frame */
 #ifndef STACKLESS
+    exit_eval_frame:
+	Py_LeaveRecursiveCall();
+	tstate->frame = f->f_back;
 
 	return retval;
 
 #else
+	Py_LeaveRecursiveCall();
+	tstate->frame = f->f_back;
 	Py_DECREF(f);
 	return retval;
 
