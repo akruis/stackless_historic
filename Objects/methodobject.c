@@ -82,7 +82,7 @@ PyCFunction_Call(PyObject *func, PyObject *arg, PyObject *kw)
 	int size;
 
 #ifdef STACKLESS
-	switch (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_STACKLESS)) {
+	switch (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_STACKLESS)) {
 #else
 	switch (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_COEXIST)) {
 #endif
