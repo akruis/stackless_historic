@@ -88,7 +88,7 @@ type_module(PyTypeObject *type, void *context)
 
 	if (type->tp_flags & Py_TPFLAGS_HEAPTYPE) {
 		mod = PyDict_GetItemString(type->tp_dict, "__module__");
-		if (!mod) { 
+		if (!mod) {
 			PyErr_Format(PyExc_AttributeError, "__module__");
 			return 0;
 		}
@@ -3402,7 +3402,7 @@ check_num_args(PyObject *ob, int n)
 	if (n == PyTuple_GET_SIZE(ob))
 		return 1;
 	PyErr_Format(
-	    PyExc_TypeError, 
+	    PyExc_TypeError,
 	    "expected %d arguments, got %d", n, PyTuple_GET_SIZE(ob));
 	return 0;
 }
@@ -4878,7 +4878,7 @@ slot_tp_init(PyObject *self, PyObject *args, PyObject *kwds)
 	if (res == NULL)
 		return -1;
 	if (res != Py_None) {
-		if (PyErr_Warn(PyExc_RuntimeWarning, 
+		if (PyErr_Warn(PyExc_RuntimeWarning,
 			"__init__() should return None") == -1) {
 			Py_DECREF(res);
 			return -1;
@@ -5016,13 +5016,13 @@ typedef struct wrapperbase slotdef;
 
 #define TPSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
 	{NAME, offsetof(PyTypeObject, SLOT), (void *)(FUNCTION), WRAPPER, \
-	 PyDoc_STR(DOC), HEAPOFF(SLOT)}
+	 PyDoc_STR(DOC), 0, 0, HEAPOFF(SLOT)}
 #define FLSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC, FLAGS) \
 	{NAME, offsetof(PyTypeObject, SLOT), (void *)(FUNCTION), WRAPPER, \
-	 PyDoc_STR(DOC), HEAPOFF(SLOT), FLAGS}
+	 PyDoc_STR(DOC), FLAGS, 0, HEAPOFF(SLOT)}
 #define ETSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC, SLPSLOT) \
 	{NAME, offsetof(PyHeapTypeObject, SLOT), (void *)(FUNCTION), WRAPPER, \
-	 PyDoc_STR(DOC), HEAPOFF(SLPSLOT)}
+	 PyDoc_STR(DOC), 0, 0, HEAPOFF(SLPSLOT)}
 
 #define SQSLOT(NAME, SLOT, FUNCTION, WRAPPER, DOC) \
 	ETSLOT(NAME, as_sequence.SLOT, FUNCTION, WRAPPER, DOC, SLOT)
@@ -5739,12 +5739,12 @@ super_getattro(PyObject *self, PyObject *name)
 				if (f != NULL) {
 					tmp = f(res,
 						/* Only pass 'obj' param if
-						   this is instance-mode super 
+						   this is instance-mode super
 						   (See SF ID #743627)
 						*/
 						(su->obj == (PyObject *)
-							    su->obj_type 
-							? (PyObject *)NULL 
+							    su->obj_type
+							? (PyObject *)NULL
 							: su->obj),
 						(PyObject *)starttype);
 					Py_DECREF(res);
