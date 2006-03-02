@@ -3782,6 +3782,7 @@ err_args(PyObject *func, int flags, int nargs)
 
 #define C_TRACE(x, call) \
 if (tstate->use_tracing && tstate->c_profilefunc) { \
+	STACKLESS_RETRACT(); \
 	if (call_trace(tstate->c_profilefunc, \
 		tstate->c_profileobj, \
 		tstate->frame, PyTrace_C_CALL, \
