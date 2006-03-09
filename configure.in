@@ -126,6 +126,17 @@ then
 	esac
 fi
 	
+# Stackless flags for compiling the hard switching code
+case $MACHDEP in
+	darwin)
+		SLPFLAGS="-fomit-frame-pointer -O2"
+		;;
+	*)
+		SLPFLAGS="-fno-omit-frame-pointer -O2"
+		;;
+esac
+AC_SUBST(SLPFLAGS)
+
 # Some systems cannot stand _XOPEN_SOURCE being defined at all; they
 # disable features if it is defined, without any means to access these
 # features as extensions. For these systems, we skip the definition of
@@ -3124,6 +3135,14 @@ for dir in $SRCDIRS; do
     fi
 done
 AC_MSG_RESULT(done)
+
+AC_SUBST(SLPFLAGS)
+SLPFLAGS="-fno-omit-frame-pointer -O2"
+case $MACHDEP in
+darwin) SLPFLAGS="-fomit-frame-pointer -O2";;
+'') SLPFLAGS="-fno-omit-frame-pointer -O2";;
+esac
+
 
 # generate output files
 AC_CONFIG_FILES(Makefile.pre Modules/Setup.config)
