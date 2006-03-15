@@ -1059,6 +1059,13 @@ handle_system_exit(void)
 	/* NOTREACHED */
 }
 
+#ifdef STACKLESS
+void PyStackless_HandleSystemExit()
+{
+	handle_system_exit();
+}
+#endif
+
 void
 PyErr_PrintEx(int set_sys_last_vars)
 {

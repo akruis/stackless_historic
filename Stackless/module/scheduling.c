@@ -1019,6 +1019,9 @@ schedule_task_destruct(PyTaskletObject *prev, PyTaskletObject *next)
 	return retval;
 }
 
+//defined in pythonrun.c
+extern void PyStackless_HandleSystemExit();
+
 static PyObject *
 tasklet_end(PyObject *retval)
 {
@@ -1036,6 +1039,9 @@ tasklet_end(PyObject *retval)
 	if (retval == NULL) {
 		if (PyErr_Occurred() &&
 		    PyErr_ExceptionMatches(PyExc_SystemExit)) {
+			//but if it is truly a SystemExit on the main thread, we want the exit!
+			if (ts == slp_initial_tstate && !PyErr_ExceptionMatches(PyExc_TaskletExit))
+				PyStackless_HandleSystemExit();
 			PyErr_Clear();
 			Py_INCREF(Py_None);
 			retval = Py_None;
