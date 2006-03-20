@@ -98,7 +98,7 @@ bomb_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	if (bomb == NULL)
 		return NULL;
 
-	if (PyTuple_GET_SIZE(args) == 1 && 
+	if (PyTuple_GET_SIZE(args) == 1 &&
 	    PyTuple_Check(PyTuple_GET_ITEM(args, 0)))
 		args = PyTuple_GET_ITEM(args, 0);
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO:bomb", kwlist,
@@ -147,7 +147,7 @@ slp_curexc_to_bomb(void)
 	PyBombObject *bomb = new_bomb();
 
 	if (bomb != NULL)
-		PyErr_Fetch(&bomb->curexc_type, &bomb->curexc_value, 
+		PyErr_Fetch(&bomb->curexc_type, &bomb->curexc_value,
 			    &bomb->curexc_traceback);
 	return (PyObject *) bomb;
 }
@@ -163,7 +163,7 @@ slp_bomb_explode(PyTaskletObject *task)
 	Py_XINCREF(bomb->curexc_type);
 	Py_XINCREF(bomb->curexc_value);
 	Py_XINCREF(bomb->curexc_traceback);
-	PyErr_Restore(bomb->curexc_type, bomb->curexc_value, 
+	PyErr_Restore(bomb->curexc_type, bomb->curexc_value,
 		      bomb->curexc_traceback);
 	Py_DECREF(bomb);
 	/* avoid periodical re-bombing */
@@ -394,7 +394,7 @@ slp_schedule_callback(PyTaskletObject *prev, PyTaskletObject *next)
 static void
 kill_wrap_bad_guy(PyTaskletObject *prev, PyTaskletObject *bad_guy)
 {
-	/* 
+	/*
 	 * just in case a transfer didn't work, we pack the bad
 	 * tasklet into the exception and remove it from the runnables.
 	 *
@@ -520,7 +520,7 @@ check_for_deadlock(void)
 static PyObject *
 make_deadlock_bomb(void)
 {
-	PyErr_SetString(PyExc_RuntimeError, 
+	PyErr_SetString(PyExc_RuntimeError,
 		"Deadlock: the last runnable tasklet cannot be blocked.");
 	return slp_curexc_to_bomb();
 }
@@ -551,7 +551,7 @@ next ? next->flags.blocked : 0)
 
 #ifdef WITH_THREAD
 
-static 
+static
 PyThread_type_lock interthread_lock = NULL;
 
 /* thread communication (protected by the lock) */
@@ -608,7 +608,7 @@ schedule_task_block(PyTaskletObject *prev, int stackless)
 				TASKLET_SETVAL(ts->st.main, prev->tempval);
 			return slp_schedule_task(prev, ts->st.main, stackless);
 		}
-		if (!(retval = make_deadlock_bomb())) 
+		if (!(retval = make_deadlock_bomb()))
 			return NULL;
 		TASKLET_SETVAL_OWN(prev, retval);
 		return slp_schedule_task(prev, prev, stackless);
@@ -675,7 +675,7 @@ schedule_task_block(PyTaskletObject *prev, int stackless)
 
 #ifdef WITH_THREAD
 
-static PyObject *schedule_task_unblock(PyTaskletObject *prev, 
+static PyObject *schedule_task_unblock(PyTaskletObject *prev,
 				       PyTaskletObject *next,
 				       int stackless)
 {
@@ -716,7 +716,7 @@ static PyObject *schedule_task_unblock(PyTaskletObject *prev,
 	acquire_lock(unlock_lock, 1);
 	PR("unblocker HAS unlocker lock");
 
-	/* 
+	/*
 	 * also make sure that only one single interthread transaction
 	 * is performed at any time.
 	 */
@@ -910,7 +910,7 @@ hard_switching:
 	ts->recursion_depth = next->recursion_depth;
 	ts->frame = next->f.frame;
 	next->f.frame = NULL;
-    
+
 	++ts->st.nesting_level;
 	if (ts->exc_type != NULL || ts->use_tracing || ts->tracing)
 		transfer = transfer_with_exc;
@@ -936,7 +936,7 @@ int
 initialize_main_and_current(void)
 {
 	PyThreadState *ts = PyThreadState_GET();
-	PyTaskletObject *task; 
+	PyTaskletObject *task;
 	PyObject *noargs;
 
 	/* refuse executing main in an unhandled error context */
@@ -1002,7 +1002,7 @@ schedule_task_destruct(PyTaskletObject *prev, PyTaskletObject *next)
 	prev->recursion_depth = 0;
 	assert(ts->frame == NULL);
 	prev->f.frame = NULL;
-	
+
 	/* do a soft switch */
 	if (prev != next)
 		retval = slp_schedule_task(prev, next, 1);
@@ -1019,7 +1019,7 @@ schedule_task_destruct(PyTaskletObject *prev, PyTaskletObject *next)
 	return retval;
 }
 
-//defined in pythonrun.c
+/* defined in pythonrun.c */
 extern void PyStackless_HandleSystemExit();
 
 static PyObject *
@@ -1031,7 +1031,7 @@ tasklet_end(PyObject *retval)
 
 	int ismain = task == ts->st.main;
 
-	/* 
+	/*
 	 * see whether we have a SystemExit, which is no error.
 	 * Note that TaskletExit is a subclass.
 	 * otherwise make the exception into a bomb.
@@ -1039,7 +1039,7 @@ tasklet_end(PyObject *retval)
 	if (retval == NULL) {
 		if (PyErr_Occurred() &&
 		    PyErr_ExceptionMatches(PyExc_SystemExit)) {
-			//but if it is truly a SystemExit on the main thread, we want the exit!
+			/* but if it is truly a SystemExit on the main thread, we want the exit! */
 			if (ts == slp_initial_tstate && !PyErr_ExceptionMatches(PyExc_TaskletExit))
 				PyStackless_HandleSystemExit();
 			PyErr_Clear();
@@ -1060,7 +1060,7 @@ tasklet_end(PyObject *retval)
 	TASKLET_SETVAL_OWN(task, retval);
 
 	if (ismain) {
-		/* 
+		/*
 		 * See whether we need to adjust main's context before
 		 * returning
 		 */
@@ -1072,7 +1072,7 @@ tasklet_end(PyObject *retval)
 	/* remove from runnables */
 	slp_current_remove();
 
-	/* 
+	/*
 	 * clean up any current exception - this tasklet is dead.
 	 * This only happens if we are killing tasklets in the middle
 	 * of their execution.
@@ -1086,7 +1086,7 @@ tasklet_end(PyObject *retval)
 
 	/* capture all exceptions */
 	if (ismain) {
-		/* 
+		/*
 		 * Main wants to exit. We clean up, but leave the
 		 * runnables chain intact.
 		 */
@@ -1128,7 +1128,7 @@ tasklet_end(PyObject *retval)
 	return schedule_task_destruct(task, next);
 }
 
-/* 
+/*
   the following functions only have to handle "real"
   tasklets, those which need to switch the C stack.
   The "soft" tasklets are handled by frame pushing.
