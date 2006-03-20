@@ -111,7 +111,7 @@ main(int argc, char **argv)
 	Py_DECREF(func);
 	/* initialize the tasklet args */
 	args = PyTuple_New(0);
-	PyTasklet_Call(process, args, NULL);
+	PyTasklet_Setup(process, args, NULL);
 	Py_DECREF(args);
 
 	/* now let's run the "game engine" */
