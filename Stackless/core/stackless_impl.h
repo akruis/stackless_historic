@@ -38,7 +38,7 @@ PyAPI_DATA(int) slp_try_stackless;
 PyAPI_DATA(PyCStackObject *) slp_cstack_chain;
 
 PyAPI_FUNC(PyCStackObject *) slp_cstack_new(PyCStackObject **cst,
-					    int *stackref,
+					    intptr_t *stackref,
 					    PyTaskletObject *task);
 PyAPI_FUNC(size_t) slp_cstack_save(PyCStackObject *cstprev);
 PyAPI_FUNC(void) slp_cstack_restore(PyCStackObject *cst);

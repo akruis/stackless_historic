@@ -4,12 +4,12 @@
 #ifdef STACKLESS
 
 #ifndef STACKLESS
-********** 
+**********
 If you see this error message,
 your operating system is not supported yet.
 Please provide an implementation of the switch_XXX.h
 or disable the STACKLESS flag.
-********** 
+**********
 #endif
 
 #include "stackless_impl.h"
@@ -32,7 +32,7 @@ static PyTaskletObject *_prev;
 		stsizeb = slp_cstack_save(*_cstprev); \
 	} \
 	else \
-        stsizeb = (_cst->startaddr - stackref) * sizeof(intptr_t); \
+        stsizeb = (_cst->startaddr - (intptr_t *)stackref) * sizeof(intptr_t); \
     if (_cst == NULL) __return(0); \
     stsizediff = stsizeb - (_cst->ob_size * sizeof(intptr_t));
 
@@ -76,7 +76,7 @@ static int
 climb_stack_and_transfer(PyCStackObject **cstprev, PyCStackObject *cst,
 			 PyTaskletObject *prev)
 {
-	/* 
+	/*
 	 * there are cases where we have been initialized
 	 * in some deep stack recursion, but later on we
 	 * need to switch from a higher stacklevel, and the

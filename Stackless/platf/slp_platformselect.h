@@ -73,4 +73,4 @@
 #define CSTACK_SAVE_NOW(tstate, stackvar) \
 	((tstate)->st.cstack_root != NULL ? \
 	 CSTACK_SUBTRACT((tstate)->st.cstack_root, \
-	 (int*)&(stackvar)) > CSTACK_WATERMARK : 1)
+	 (intptr_t*)&(stackvar)) > CSTACK_WATERMARK : 1)
