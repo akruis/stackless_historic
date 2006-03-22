@@ -1,3 +1,6 @@
+# Created by ? (Christian?)
+# Updated for changes to the Stackless atomicity by N. J. Harman.
+
 from stackless import *
 
 debug = 1
@@ -13,19 +16,27 @@ class mutex:
 
     def lock(self):
         '''acquire the lock'''
-        atom = atomic()
-        if self.capacity:
-            self.capacity -= 1
-        else:
-            self.queue.receive()
+        currentTasklet = stackless.getcurrent()
+        atomic = currentTasklet.set_atomic(True)
+        try:
+            if self.capacity:
+                self.capacity -= 1
+            else:
+                self.queue.receive()
+        finally:
+            currentTasklet.set_atomic(atomic)
 
     def unlock(self):
         '''release the lock'''
-        atom = atomic()
-        if self.queue.balance < 0:
-            self.queue.send(None)
-        else:
-            self.capacity += 1
+        currentTasklet = stackless.getcurrent()
+        atomic = currentTasklet.set_atomic(True)
+        try:
+            if self.queue.balance < 0:
+                self.queue.send(None)
+            else:
+                self.capacity += 1
+        finally:
+            currentTasklet.set_atomic(atomic)
 
 class MyTasklet(tasklet):
     __slots__ = ["name"]
