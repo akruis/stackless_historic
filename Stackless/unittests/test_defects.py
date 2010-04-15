@@ -80,7 +80,7 @@ class Schedule(unittest.TestCase):
 
     def testScheduleRemove2(self):
         #schedule remove doesn't work if it is the only tasklet with main blocked
-            #main tasklet is blocked, this should raise an error
+        #main tasklet is blocked, this should raise an error
         def func(self, chan):
             self.assertRaises(RuntimeError, stackless.schedule_remove)
             chan.send(None)
