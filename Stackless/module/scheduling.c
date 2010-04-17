@@ -766,7 +766,7 @@ static PyObject *schedule_task_unblock(PyTaskletObject *prev,
 
 /* deal with soft interrupts by modifying next to specify the main tasklet */
 static void slp_schedule_soft_irq(PyThreadState *ts, PyTaskletObject *prev,
-						   PyTaskletObject **next)
+						   PyTaskletObject **next, int not_now)
 {
 	PyTaskletObject *tmp;
 	assert(*next);
@@ -781,7 +781,7 @@ static void slp_schedule_soft_irq(PyThreadState *ts, PyTaskletObject *prev,
 	if (prev == ts->st.main || *next == ts->st.main)
 		return;
 
-	if (!TASKLET_NESTING_OK(prev)) {
+	if (not_now || !TASKLET_NESTING_OK(prev)) {
 		/* pass the irq flag to the next tasklet */
 		(*next)->flags.pending_irq = 1;
 		return;
@@ -807,6 +807,7 @@ slp_schedule_task(PyTaskletObject *prev, PyTaskletObject *next, int stackless)
 	PyCStackObject **cstprev;
 	PyObject *retval;
 	int (*transfer)(PyCStackObject **, PyCStackObject *, PyTaskletObject *);
+	int no_soft_irq;
 
 	if (next == NULL) {
 		return schedule_task_block(prev, stackless);
@@ -817,6 +818,11 @@ slp_schedule_task(PyTaskletObject *prev, PyTaskletObject *next, int stackless)
 		return schedule_task_unblock(prev, next, stackless);
 	}
 #endif
+
+	/* remove the no-soft-irq flag from the runflags */
+	no_soft_irq = ts->st.runflags & PY_WATCHDOG_NO_SOFT_IRQ;
+	ts->st.runflags &= ~PY_WATCHDOG_NO_SOFT_IRQ;
+
 	if (next->flags.blocked) {
 		/* unblock from channel */
 		slp_channel_remove_slow(next);
@@ -827,18 +833,15 @@ slp_schedule_task(PyTaskletObject *prev, PyTaskletObject *next, int stackless)
 		Py_INCREF(next);
 		slp_current_insert(next);
 	}
+
+	slp_schedule_soft_irq(ts, prev, &next, no_soft_irq);
+
 	if (prev == next) {
 		TASKLET_CLAIMVAL(prev, &retval);
 		if (PyBomb_Check(retval))
 			retval = slp_bomb_explode(retval);
 		return retval;
 	}
-
-	/* only soft irq if prev != next, so that channel send
-	 * on a channel with preference 0 doesn't accidentally cause a
-	 * schedule
-	 */
-	slp_schedule_soft_irq(ts, prev, &next);
 
 	NOTIFY_SCHEDULE(prev, next, NULL);
 
@@ -1038,8 +1041,20 @@ schedule_task_destruct(PyTaskletObject *prev, PyTaskletObject *next)
 		ts->st.nesting_level = 0;
 	}
 
-	/* update what's not yet updated */
-	assert(ts->recursion_depth == 0);
+	/* update what's not yet updated
+
+	Normal tasklets when created have no recursion depth yet, but the main
+	tasklet is initialized in the middle of an existing indeterminate call
+	stack.  Therefore it is not guaranteed that there is not a pre-existing
+	recursion depth from before its initialization.
+
+	Previously, we exited a main tasklet with the expectation that there would
+	be no current one.  This is incorrect, and the case of the interpreter where
+	each command creates a new main tasklet to create a new tasklet, which is
+	scheduled (made the current now) but not run yet, means we need to expand
+	this check.
+	*/
+	assert(ts->recursion_depth == 0 || ts->st.main == NULL && ts->st.current != next && prev == next);
 	prev->recursion_depth = 0;
 	assert(ts->frame == NULL);
 	prev->f.frame = NULL;

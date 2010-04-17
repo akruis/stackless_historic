@@ -341,7 +341,6 @@ typedef struct Picklerobject {
 	int bin;
 
 	int fast; /* Fast mode doesn't save in memo, don't use if circ ref */
-        int nesting;
 	int (*write_func)(struct Picklerobject *, const char *, Py_ssize_t);
 	char *write_buf;
 	int buf_size;
@@ -657,6 +656,12 @@ read_other(Unpicklerobject *self, char **s, Py_ssize_t  n)
 	self->last_string = str;
 
 	if (! (*s = PyString_AsString(str))) return -1;
+
+	if (PyString_GET_SIZE(str) != n) {
+		PyErr_SetNone(PyExc_EOFError);
+		return -1;
+	}
+
 	return n;
 }
 
@@ -2335,11 +2340,8 @@ save(Picklerobject *self, PyObject *args, int pers_save)
 	if (CSTACK_SAVE_NOW(PyThreadState_GET(), self))
 		return slp_safe_pickling((void *)&save, (PyObject *)self, args, pers_save);
 #endif
-	if (self->nesting++ > Py_GetRecursionLimit()){
-		PyErr_SetString(PyExc_RuntimeError,
-				"maximum recursion depth exceeded");
-		goto finally;
-	}
+	if (Py_EnterRecursiveCall(" while pickling an object"))
+		return -1;
 
 	if (!pers_save && self->pers_func) {
 		if ((tmp = save_pers(self, args, self->pers_func)) != 0) {
@@ -2395,6 +2397,7 @@ save(Picklerobject *self, PyObject *args, int pers_save)
 			res = save_string(self, args, 0);
 			goto finally;
 		}
+		break;
 
 #ifdef Py_USING_UNICODE
         case 'u':
@@ -2402,6 +2405,7 @@ save(Picklerobject *self, PyObject *args, int pers_save)
 			res = save_unicode(self, args, 0);
 			goto finally;
 		}
+		break;
 #endif
 	}
 
@@ -2582,7 +2586,7 @@ save(Picklerobject *self, PyObject *args, int pers_save)
 	res = save_reduce(self, t, __reduce__, args);
 
   finally:
-	self->nesting--;
+	Py_LeaveRecursiveCall();
 	Py_XDECREF(py_ob_id);
 	Py_XDECREF(__reduce__);
 	Py_XDECREF(t);
@@ -2824,7 +2828,6 @@ newPicklerobject(PyObject *file, int proto)
 	self->inst_pers_func = NULL;
 	self->write_buf = NULL;
 	self->fast = 0;
-        self->nesting = 0;
 	self->fast_container = 0;
 	self->fast_memo = NULL;
 	self->buf_size = 0;
@@ -2884,7 +2887,7 @@ newPicklerobject(PyObject *file, int proto)
 
 	if (PyEval_GetRestricted()) {
 		/* Restricted execution, get private tables */
-		PyObject *m = PyImport_Import(copy_reg_str);
+		PyObject *m = PyImport_ImportModule("copy_reg");
 
 		if (m == NULL)
 			goto err;
@@ -5654,7 +5657,7 @@ static struct PyMethodDef cPickle_methods[] = {
 static int
 init_stuff(PyObject *module_dict)
 {
-	PyObject *copy_reg, *t, *r;
+	PyObject *copyreg, *t, *r;
 
 #define INIT_STR(S) if (!( S ## _str=PyString_InternFromString(#S)))  return -1;
 
@@ -5676,30 +5679,29 @@ init_stuff(PyObject *module_dict)
 	INIT_STR(append);
 	INIT_STR(read);
 	INIT_STR(readline);
-	INIT_STR(copy_reg);
 	INIT_STR(dispatch_table);
 
-	if (!( copy_reg = PyImport_ImportModule("copy_reg")))
+	if (!( copyreg = PyImport_ImportModule("copy_reg")))
 		return -1;
 
 	/* This is special because we want to use a different
 	   one in restricted mode. */
-	dispatch_table = PyObject_GetAttr(copy_reg, dispatch_table_str);
+	dispatch_table = PyObject_GetAttr(copyreg, dispatch_table_str);
 	if (!dispatch_table) return -1;
 
-	extension_registry = PyObject_GetAttrString(copy_reg,
+	extension_registry = PyObject_GetAttrString(copyreg,
 				"_extension_registry");
 	if (!extension_registry) return -1;
 
-	inverted_registry = PyObject_GetAttrString(copy_reg,
+	inverted_registry = PyObject_GetAttrString(copyreg,
 				"_inverted_registry");
 	if (!inverted_registry) return -1;
 
-	extension_cache = PyObject_GetAttrString(copy_reg,
+	extension_cache = PyObject_GetAttrString(copyreg,
 				"_extension_cache");
 	if (!extension_cache) return -1;
 
-	Py_DECREF(copy_reg);
+	Py_DECREF(copyreg);
 
 	if (!(empty_tuple = PyTuple_New(0)))
 		return -1;

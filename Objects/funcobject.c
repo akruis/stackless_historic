@@ -355,6 +355,10 @@ The optional closure tuple supplies the bindings for free variables.");
    for every elt in closure, type(elt) == cell
 */
 
+#ifdef STACKLESS
+extern PyTypeObject *_Pywrap_PyCell_Type;
+#endif
+
 static PyObject *
 func_new(PyTypeObject* type, PyObject* args, PyObject* kw)
 {
@@ -409,7 +413,11 @@ func_new(PyTypeObject* type, PyObject* args, PyObject* kw)
 		Py_ssize_t i;
 		for (i = 0; i < nclosure; i++) {
 			PyObject *o = PyTuple_GET_ITEM(closure, i);
+#ifdef STACKLESS
+			if (!PyCell_Check(o) && (o->ob_type != _Pywrap_PyCell_Type)) {
+#else
 			if (!PyCell_Check(o)) {
+#endif
 				return PyErr_Format(PyExc_TypeError,
 				    "arg 5 (closure) expected cell, found %s",
 						    o->ob_type->tp_name);

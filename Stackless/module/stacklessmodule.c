@@ -135,7 +135,7 @@ getcurrent(PyObject *self)
 
 static char getmain__doc__[] =
 "getmain() -- return the main tasklet of this thread.";
- 
+
 static PyObject *
 getmain(PyObject *self)
 {
@@ -199,7 +199,7 @@ interrupt_timeout_return(void)
 {
 	PyThreadState *ts = PyThreadState_GET();
 	PyTaskletObject *current = ts->st.current;
-	
+
 	/*
 	 * we mark the IRQ as pending if 
 	 * a) we are in soft interrupt mode
@@ -248,7 +248,7 @@ PyStackless_RunWatchdogEx(long timeout, int flags)
 		RUNTIME_ERROR(
 		    "run() must be run from the main tasklet.",
 		    NULL);
-	
+
 	if (timeout <= 0)
 		ts->st.interrupt = NULL;
 	else
@@ -277,7 +277,7 @@ PyStackless_RunWatchdogEx(long timeout, int flags)
 	if (retval == NULL) /* an exception has occoured */
 		return NULL;
 
-	/* 
+	/*
 	 * back in main.
 	 * We were either revived by slp_tasklet_end or the interrupt.
 	 * If we were using hard interrupts (bit 1 in flags not set)
@@ -410,7 +410,7 @@ static char test_outside__doc__[] =
 "test_outside() -- a builtin testing function.\n\
 This function simulates an application that does not run \"inside\"\n\
 Stackless, with active, running frames, but always needs to initialize\n\
-the main tasklet to get \"ínside\".\n\
+the main tasklet to get \"inside\".\n\
 The function will terminate when no other tasklets are runnable.\n\
 \n\
 Typical usage: Create a tasklet for test_cframe and run by test_outside().\n\
@@ -532,7 +532,7 @@ test_cstate(PyObject *f, PyObject *callable)
 
  ******************************************************/
 
-PyObject * 
+PyObject *
 PyStackless_Call_Main(PyObject *func, PyObject *args, PyObject *kwds)
 {
 	PyThreadState *ts = PyThreadState_GET();
@@ -775,6 +775,41 @@ _get_all_objects(PyObject *self)
 
 #endif
 
+/******************************************************
+
+  Special support for RPython
+
+ ******************************************************/
+
+/*
+  In RPython, we are not allowed to use cyclic references
+  without explicitly breaking them, or we leak memory.
+  I wrote a tool to find out which code line causes
+  unreachable objects. It works by running a full GC run
+  after every line. To make this reasonably fast, it makes
+  sense to remove the existing GC objects temporarily.
+ */
+
+static PyObject *
+_gc_untrack(PyObject *self, PyObject *ob)
+{
+	PyObject_GC_UnTrack(ob);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject *
+_gc_track(PyObject *self, PyObject *ob)
+{
+	PyObject_GC_Track(ob);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static char _gc_untrack__doc__[] =
+"_gc_untrack, gc_track -- remove or add an object from the gc list.";
+
+
 /* List of functions defined in the module */
 
 #define PCF PyCFunction
@@ -811,6 +846,10 @@ static PyMethodDef stackless_methods[] = {
 	 slp_pickle_moduledict__doc__},
 	{"get_thread_info",	    (PCF)get_thread_info,	METH_VARARGS,
 	 get_thread_info__doc__},
+	{"_gc_untrack",		    (PCF)_gc_untrack,		METH_O,
+	_gc_untrack__doc__},
+	{"_gc_track",		    (PCF)_gc_track,		METH_O,
+	_gc_untrack__doc__},
 #ifdef STACKLESS_SPY
 	{"_peek",		    (PCF)_peek,			METH_O,
 	 _peek__doc__},
@@ -1028,7 +1067,7 @@ static PyTypeObject PySlpModule_TypeTemplate = {
 	PyObject_GenericGetAttr,	/* tp_getattro */
 	PyObject_GenericSetAttr,	/* tp_setattro */
 	0,				/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | 
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
 		Py_TPFLAGS_HAVE_GC,	/* tp_flags */
 	PySlpModule_Type__doc__,	/* tp_doc */
 	0,				/* tp_traverse */

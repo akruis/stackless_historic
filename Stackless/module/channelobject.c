@@ -412,6 +412,7 @@ generic_channel_action(PyChannelObject *self, PyObject *arg, int dir, int stackl
 	int cando = dir > 0 ? self->balance < 0 : self->balance > 0;
 	int interthread = cando ? target->cstate->tstate != ts : 0;
 	PyObject *retval;
+	int runflags = 0;
 
 	assert(abs(dir) == 1);
 
@@ -445,11 +446,15 @@ generic_channel_action(PyChannelObject *self, PyObject *arg, int dir, int stackl
 				ts->st.current = source->next;
 				slp_current_insert(target);
 				ts->st.current = source;
+				/* don't mess with this scheduling behaviour: */
+				runflags = PY_WATCHDOG_NO_SOFT_IRQ;
 			}
 			else {
 				/* otherwise we return to the caller */
 				slp_current_insert(target);
 				target = source;
+				/* don't mess with this scheduling behaviour: */
+				runflags = PY_WATCHDOG_NO_SOFT_IRQ;
 			}
 		}
 	}
@@ -475,7 +480,9 @@ generic_channel_action(PyChannelObject *self, PyObject *arg, int dir, int stackl
 		ts->st.del_post_switch = (PyObject*)self;
 		Py_INCREF(self);
 	}
+	ts->st.runflags |= runflags; /* extra info for slp_schedule_task */
 	retval = slp_schedule_task(source, target, stackless);
+
 	if (interthread) {
 		if (cando) {
 			Py_DECREF(target);

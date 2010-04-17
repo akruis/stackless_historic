@@ -807,10 +807,6 @@ exit_eval_frame:
 	return NULL;
 }
 
-#if defined _MSC_VER && _MSC_VER >= 1400
-/* prevent VisualStudio from collapsing the following two functions */
-#pragma optimize("g", off)
-#endif
 PyObject *
 PyEval_EvalFrame_noval(PyFrameObject *f, int throwflag, PyObject *retval)
 {
@@ -830,17 +826,9 @@ PyEval_EvalFrame_iter(PyFrameObject *f, int throwflag, PyObject *retval)
 	 * it serves as a marker whether we are inside of a
 	 * for_iter operation. In this case we need to handle
 	 * null without error as valid result.
-	 * Note, it is not just a copy of the above function, but calls
-	 * the above.  This is to prevent clever compilers from
-	 * collapsing these two functions into one and thus ruining
-	 * our smart logic that tests f_execute for these functions.
 	 */
-	return PyEval_EvalFrame_noval(f, throwflag, retval);
+	return PyEval_EvalFrame_value(f, throwflag, retval);
 }
-
-#if defined _MSC_VER && _MSC_VER >= 1400
-#pragma optimize("", on)
-#endif
 
 PyObject *
 PyEval_EvalFrame_value(PyFrameObject *f, int throwflag, PyObject *retval)
@@ -1002,11 +990,11 @@ PyEval_EvalFrame_value(PyFrameObject *f, int throwflag, PyObject *retval)
 		   Py_MakePendingCalls() above. */
 
 		if (--_Py_Ticker < 0) {
-                        if (*next_instr == SETUP_FINALLY) {
-                                /* Make the last opcode before
-                                   a try: finally: block uninterruptable. */
-                                goto fast_next_opcode;
-                        }
+			if (*next_instr == SETUP_FINALLY) {
+				/* Make the last opcode before
+				   a try: finally: block uninterruptable. */
+				goto fast_next_opcode;
+			}
 #ifdef STACKLESS
 			if (tstate->st.interrupt &&
 			    !tstate->curexc_type) {
@@ -2870,7 +2858,7 @@ fast_yield:
 
 	/* pop frame */
 #ifndef STACKLESS
-    exit_eval_frame:
+exit_eval_frame:
 	Py_LeaveRecursiveCall();
 	tstate->frame = f->f_back;
 
@@ -3183,10 +3171,10 @@ PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
 		return retval;
 	}
 #else
-        retval = PyEval_EvalFrameEx(f,0);
+	retval = PyEval_EvalFrameEx(f,0);
 #endif
 
-  fail: /* Jump here from prelude on failure */
+fail: /* Jump here from prelude on failure */
 
 	/* decref'ing the frame can cause __del__ methods to get invoked,
 	   which can call back into Python.  While we're done with the
@@ -3195,7 +3183,7 @@ PyEval_EvalCodeEx(PyCodeObject *co, PyObject *globals, PyObject *locals,
 	*/
 	assert(tstate != NULL);
 	++tstate->recursion_depth;
-        Py_DECREF(f);
+	Py_DECREF(f);
 	--tstate->recursion_depth;
 	return retval;
 }

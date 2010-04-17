@@ -47,6 +47,8 @@ typedef struct _sts {
 	PyObject *del_post_switch;		/* To decref after a switch */
 } PyStacklessState;
 
+/* internal macro to temporarily disable soft interrupts */
+#define PY_WATCHDOG_NO_SOFT_IRQ	(1<<31)
 
 /* these macros go into pystate.c */
 #define __STACKLESS_PYSTATE_NEW \
