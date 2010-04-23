@@ -162,11 +162,11 @@ PyFunction_SetClosure(PyObject *op, PyObject *closure)
 static PyMemberDef func_memberlist[] = {
         {"func_closure",  T_OBJECT,     OFF(func_closure),
 	 RESTRICTED|READONLY},
-        {"func_doc",      T_OBJECT,     OFF(func_doc), WRITE_RESTRICTED},
-        {"__doc__",       T_OBJECT,     OFF(func_doc), WRITE_RESTRICTED},
+        {"func_doc",      T_OBJECT,     OFF(func_doc), PY_WRITE_RESTRICTED},
+        {"__doc__",       T_OBJECT,     OFF(func_doc), PY_WRITE_RESTRICTED},
         {"func_globals",  T_OBJECT,     OFF(func_globals),
 	 RESTRICTED|READONLY},
-        {"__module__",    T_OBJECT,     OFF(func_module), WRITE_RESTRICTED},
+        {"__module__",    T_OBJECT,     OFF(func_module), PY_WRITE_RESTRICTED},
         {NULL}  /* Sentinel */
 };
 

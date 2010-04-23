@@ -3,6 +3,11 @@
 #ifdef STACKLESS
 #include "stackless_impl.h"
 
+/* backward compatibility */
+#ifndef Py_TYPE
+#define Py_TYPE(ob)	(ob->ob_type)
+#endif
+
 /* Shorthands to return certain errors */
 
 PyObject *
@@ -138,7 +143,7 @@ slp_resurrect_and_kill(PyObject *self, void(*killer)(PyObject *))
 		_Py_NewReference(self);
 		self->ob_refcnt = refcnt;
 	}
-	assert(!PyType_IS_GC(self->ob_type) ||
+	assert(!PyType_IS_GC(Py_TYPE(self)) ||
 	       _Py_AS_GC(self)->gc.gc_refs != _PyGC_REFS_UNTRACKED);
 	/* If Py_REF_DEBUG, _Py_NewReference bumped _Py_RefTotal, so
 	 * we need to undo that. */
@@ -158,8 +163,8 @@ slp_resurrect_and_kill(PyObject *self, void(*killer)(PyObject *))
 	   decref'ed on return (see e.g. subtype_dealloc in typeobject.c).
 	   This will undo that, thus preventing a crash.  But such a type
 	   _will_ have had its dict and slots cleared. */
-	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_HEAPTYPE))
-		Py_INCREF(self->ob_type);
+	if (PyType_HasFeature(Py_TYPE(self), Py_TPFLAGS_HEAPTYPE))
+		Py_INCREF(Py_TYPE(self));
 
 	return -1;
 }
