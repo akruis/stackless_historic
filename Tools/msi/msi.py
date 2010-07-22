@@ -231,7 +231,7 @@ def build_database():
     # (ui/execute, admin/advt/install)
     msiname = "python-%s%s-stackless.msi" % (full_current_version, msilib.arch_ext)
     db = msilib.init_database(msiname,
-                  schema, ProductName="Python "+full_current_version+productsuffix+" (Stackless)",
+                  schema, ProductName="Python "+full_current_version+productsuffix,
                   ProductCode=product_code,
                   ProductVersion=current_version,
                   Manufacturer=u"The Stackless Team",
