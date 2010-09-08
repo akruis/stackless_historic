@@ -443,8 +443,8 @@ restore_tracing(PyFrameObject *f, int exc, PyObject *retval)
     PyCFrameObject *cf = (PyCFrameObject *) f;
 
     f = cf->f_back;
-    ts->c_tracefunc = cf->any1;
-    ts->c_profilefunc = cf->any2;
+    ts->c_tracefunc = (Py_tracefunc)cf->any1;
+    ts->c_profilefunc = (Py_tracefunc)cf->any2;
     ts->c_traceobj = cf->ob1;
     ts->c_profileobj = cf->ob2;
     ts->tracing = cf->i;

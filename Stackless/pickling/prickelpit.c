@@ -388,8 +388,8 @@ slp_find_execfuncs(PyTypeObject *type, PyObject *exec_name,
     if (0
         || exec_tup == NULL
         || !PyArg_ParseTuple(exec_tup, "OO", &g, &b)
-        || (*good = PyLong_AsVoidPtr(g)) == NULL
-        || (*bad = PyLong_AsVoidPtr(b)) == NULL) {
+        || (*good = (PyFrame_ExecFunc*)PyLong_AsVoidPtr(g)) == NULL
+        || (*bad =  (PyFrame_ExecFunc*)PyLong_AsVoidPtr(b)) == NULL) {
         char msg[500];
 
         PyErr_Clear();
