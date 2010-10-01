@@ -426,8 +426,11 @@ slp_eval_frame_newstack(PyFrameObject *f, int exc, PyObject *retval)
     PyCStackObject *cst;
     PyObject *packed, *tmpval;
 
-    if (cur == NULL) {
-        /* this is during early initialization.  Just bypass this mechanism */
+    if (cur == NULL || PyErr_Occurred()) {
+        /* Bypass this during early initialization or if we have a pending
+         * exception, such as the one set via gen_close().  Doing the stack
+         * magic here will clear that exception.
+         */
         intptr_t *old = ts->st.cstack_root;
         ts->st.cstack_root = STACK_REFPLUS + (intptr_t *) &f;
         retval = PyEval_EvalFrameEx_slp(f,exc, retval);
