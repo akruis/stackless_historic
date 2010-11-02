@@ -586,6 +586,8 @@ static int schedule_thread_block(PyThreadState *ts)
     acquire_lock(ts->st.thread.block_lock, 1);
     Py_END_ALLOW_THREADS
 
+    /* Now we have switched (on this thread), clear any post-switch stuff */
+    Py_CLEAR(ts->st.del_post_switch);
     return 0;
 }
 
