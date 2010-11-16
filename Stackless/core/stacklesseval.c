@@ -356,11 +356,10 @@ void slp_kill_tasks_with_stacks(PyThreadState *ts)
             t = cs->task;
         }
 
-        Py_INCREF(t); /* because the following steals a reference */
         PyTasklet_Kill(t);
         PyErr_Clear();
 
-        if (t->f.frame == 0) {
+        if (t->cstate != NULL) {
             /* ensure a valid tstate */
             t->cstate->tstate = slp_initial_tstate;
         }
