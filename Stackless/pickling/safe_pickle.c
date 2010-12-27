@@ -17,9 +17,16 @@ pickle_callback(PyFrameObject *f, int exc, PyObject *retval)
     PyTaskletObject *cur = ts->st.current;
     PyCStackObject *cst = cur->cstate;
     PyCFrameObject *cf = (PyCFrameObject *) f;
+    intptr_t *saved_base;
 
+    /* We must base our new stack from here, because oterwise we might find
+     * ourselves in an infinite loop of stack spilling.
+     */
+    saved_base = ts->st.cstack_root;
+    ts->st.cstack_root = STACK_REFPLUS + (intptr_t *) &f;
     Py_DECREF(retval);
     cf->i = cPickle_save(cf->ob1, cf->ob2, cf->n);
+    ts->st.cstack_root = saved_base;
     /* jump back. No decref, frame contains result. */
     ts->frame = cf->f_back;
     slp_transfer_return(cst);

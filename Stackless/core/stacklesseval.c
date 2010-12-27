@@ -393,13 +393,22 @@ eval_frame_callback(PyFrameObject *f, int exc, PyObject *retval)
     PyCStackObject *cst = cur->cstate;
     PyCFrameObject *cf = (PyCFrameObject *) f;
     PyObject *tmpval;
+    intptr_t *saved_base;
 
     ts->st.nesting_level = cf->n;
     ts->frame = f->f_back;
     Py_DECREF(f);
     cur->cstate = ts->st.initial_stub;
     Py_INCREF(cur->cstate);
+
+    /* We must base our new stack from here, because otherwise we might find
+     * ourselves in an infinite loop of stack spilling.
+     */
+    saved_base = ts->st.cstack_root;
+    ts->st.cstack_root = STACK_REFPLUS + (intptr_t *) &f;
     retval = PyEval_EvalFrameEx_slp(ts->frame, exc, retval);
+    ts->st.cstack_root = saved_base;
+
     if (retval == NULL)
         retval = slp_curexc_to_bomb();
     if (retval == NULL)
