@@ -40,7 +40,7 @@ The :mod:`locale` module defines the following exception and functions:
    If *locale* is omitted or ``None``, the current setting for *category* is
    returned.
 
-   :func:`setlocale` is not thread safe on most systems. Applications typically
+   :func:`setlocale` is not thread-safe on most systems. Applications typically
    start with a call of ::
 
       import locale
@@ -247,10 +247,6 @@ The :mod:`locale` module defines the following exception and functions:
       function to use this information.  The format of the returned string is not
       specified, and therefore you should not assume knowledge of it on different
       systems.
-
-   .. data:: ERA_YEAR
-
-      Get the year in the relevant era of the locale.
 
    .. data:: ERA_D_T_FMT
 
@@ -558,7 +554,7 @@ catalogs, and the C library's search algorithms for locating message catalogs.
 
 Python applications should normally find no need to invoke these functions, and
 should use :mod:`gettext` instead.  A known exception to this rule are
-applications that link use additional C libraries which internally invoke
+applications that link with additional C libraries which internally invoke
 :cfunc:`gettext` or :func:`dcgettext`.  For these applications, it may be
 necessary to bind the text domain, so that the libraries can properly locate
 their message catalogs.

@@ -223,7 +223,7 @@ process and user.
 .. function:: getresgid()
 
    Return a tuple (rgid, egid, sgid) denoting the current process's
-   real, effective, and saved user ids.
+   real, effective, and saved group ids.
 
    Availability: Unix.
 
@@ -337,7 +337,7 @@ process and user.
 
    Set the current process's real, effective, and saved user ids.
 
-   Availibility: Unix.
+   Availability: Unix.
 
    .. versionadded:: 2.7
 
@@ -756,7 +756,7 @@ as internal buffering of data.
 
       This function is intended for low-level I/O.  For normal usage, use the
       built-in function :func:`open`, which returns a "file object" with
-      :meth:`~file.read` and :meth:`~file.wprite` methods (and many more).  To
+      :meth:`~file.read` and :meth:`~file.write` methods (and many more).  To
       wrap a file descriptor in a "file object", use :func:`fdopen`.
 
 
@@ -1679,15 +1679,15 @@ to be ignored.
 
 .. function:: _exit(n)
 
-   Exit to the system with status *n*, without calling cleanup handlers, flushing
+   Exit the process with status *n*, without calling cleanup handlers, flushing
    stdio buffers, etc.
 
    Availability: Unix, Windows.
 
    .. note::
 
-      The standard way to exit is ``sys.exit(n)``. :func:`_exit` should normally only
-      be used in the child process after a :func:`fork`.
+      The standard way to exit is ``sys.exit(n)``.  :func:`_exit` should
+      normally only be used in the child process after a :func:`fork`.
 
 The following exit codes are defined and can be used with :func:`_exit`,
 although they are not required.  These are typically used for system programs
@@ -2096,8 +2096,9 @@ written in Python, such as a mail server's external command delivery program.
 
    The :mod:`subprocess` module provides more powerful facilities for spawning new
    processes and retrieving their results; using that module is preferable to using
-   this function.  Use the :mod:`subprocess` module.  Check especially the
-   :ref:`subprocess-replacements` section.
+   this function.  See the
+   :ref:`subprocess-replacements` section in the :mod:`subprocess` documentation
+   for some helpful recipes.
 
    Availability: Unix, Windows.
 

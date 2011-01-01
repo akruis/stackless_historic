@@ -141,10 +141,12 @@ A partial list of 3.1 features that were backported to 2.7:
 * The :class:`memoryview` object.
 * A small subset of the :mod:`importlib` module,
   `described below <#importlib-section>`__.
-* Float-to-string and string-to-float conversions now round their
-  results more correctly, and :func:`repr` of a floating-point
-  number *x* returns a result that's guaranteed to round back to the
-  same number when converted back to a string.
+* The :func:`repr` of a float ``x`` is shorter in many cases: it's now
+  based on the shortest decimal string that's guaranteed to round back
+  to ``x``.  As in previous versions of Python, it's guaranteed that
+  ``float(repr(x))`` recovers ``x``.
+* Float-to-string and string-to-float conversions are correctly rounded.
+  The :func:`round` function is also now correctly rounded.
 * The :ctype:`PyCapsule` type, used to provide a C API for extension modules.
 * The :cfunc:`PyLong_AsLongAndOverflow` C API function.
 
@@ -242,7 +244,7 @@ The standard library now supports use of ordered dictionaries in several
 modules.
 
 * The :mod:`ConfigParser` module uses them by default, meaning that
-  configuration files can now read, modified, and then written back
+  configuration files can now be read, modified, and then written back
   in their original order.
 
 * The :meth:`~collections.somenamedtuple._asdict()` method for
@@ -868,12 +870,6 @@ Optimizations
 
 Several performance enhancements have been added:
 
-.. * A new :program:`configure` option, :option:`--with-computed-gotos`,
-   compiles the main bytecode interpreter loop using a new dispatch
-   mechanism that gives speedups of up to 20%, depending on the system
-   and benchmark.  The new mechanism is only supported on certain
-   compilers, such as gcc, SunPro, and icc.
-
 * A new opcode was added to perform the initial setup for
   :keyword:`with` statements, looking up the :meth:`__enter__` and
   :meth:`__exit__` methods.  (Contributed by Benjamin Peterson.)
@@ -1073,7 +1069,7 @@ changes, or look through the Subversion logs for all the details.
   (Added by Raymond Hettinger; :issue:`1818`.)
 
   Finally, the :class:`~collections.Mapping` abstract base class now
-  raises a :exc:`NotImplemented` exception if a mapping is compared to
+  returns :const:`NotImplemented` if a mapping is compared to
   another type that isn't a :class:`Mapping`.
   (Fixed by Daniel Stutzbach; :issue:`8729`.)
 

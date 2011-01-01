@@ -7,6 +7,26 @@ Built-in Functions
 The Python interpreter has a number of functions built into it that are always
 available.  They are listed here in alphabetical order.
 
+===================  =================  ==================  =================  ====================
+..                   ..                 Built-in Functions  ..                 ..
+===================  =================  ==================  =================  ====================
+:func:`abs`          :func:`divmod`     :func:`input`       :func:`open`       :func:`staticmethod`
+:func:`all`          :func:`enumerate`  :func:`int`         :func:`ord`        :func:`str`
+:func:`any`          :func:`eval`       :func:`isinstance`  :func:`pow`        :func:`sum`
+:func:`basestring`   :func:`execfile`   :func:`issubclass`  :func:`print`      :func:`super`
+:func:`bin`          :func:`file`       :func:`iter`        :func:`property`   :func:`tuple`
+:func:`bool`         :func:`filter`     :func:`len`         :func:`range`      :func:`type`
+:func:`bytearray`    :func:`float`      :func:`list`        :func:`raw_input`  :func:`unichr`
+:func:`callable`     :func:`format`     :func:`locals`      :func:`reduce`     :func:`unicode`
+:func:`chr`          :func:`frozenset`  :func:`long`        :func:`reload`     :func:`vars`
+:func:`classmethod`  :func:`getattr`    :func:`map`         :func:`repr`       :func:`xrange`
+:func:`cmp`          :func:`globals`    :func:`max`         :func:`reversed`   :func:`zip`
+:func:`compile`      :func:`hasattr`    :func:`memoryview`  :func:`round`      :func:`__import__`
+:func:`complex`      :func:`hash`       :func:`min`         :func:`set`        :func:`apply`
+:func:`delattr`      :func:`help`       :func:`next`        :func:`setattr`    :func:`buffer`
+:func:`dict`         :func:`hex`        :func:`object`      :func:`slice`      :func:`coerce`
+:func:`dir`          :func:`id`         :func:`oct`         :func:`sorted`     :func:`intern`
+===================  =================  ==================  =================  ====================
 
 .. function:: abs(x)
 
@@ -76,6 +96,32 @@ available.  They are listed here in alphabetical order.
 
    .. versionchanged:: 2.3
       If no argument is given, this function returns :const:`False`.
+
+
+.. function:: bytearray([source[, encoding[, errors]]])
+
+   Return a new array of bytes.  The :class:`bytearray` type is a mutable
+   sequence of integers in the range 0 <= x < 256.  It has most of the usual
+   methods of mutable sequences, described in :ref:`typesseq-mutable`, as well
+   as most methods that the :class:`str` type has, see :ref:`string-methods`.
+
+   The optional *source* parameter can be used to initialize the array in a few
+   different ways:
+
+   * If it is a *string*, you must also give the *encoding* (and optionally,
+     *errors*) parameters; :func:`bytearray` then converts the string to
+     bytes using :meth:`str.encode`.
+
+   * If it is an *integer*, the array will have that size and will be
+     initialized with null bytes.
+
+   * If it is an object conforming to the *buffer* interface, a read-only buffer
+     of the object will be used to initialize the bytes array.
+
+   * If it is an *iterable*, it must be an iterable of integers in the range
+     ``0 <= x < 256``, which are used as the initial contents of the array.
+
+   Without an argument, an array of size 0 is created.
 
 
 .. function:: callable(object)
@@ -347,6 +393,9 @@ available.  They are listed here in alphabetical order.
    returns the current global and local dictionary, respectively, which may be
    useful to pass around for use by :func:`eval` or :func:`execfile`.
 
+   See :func:`ast.literal_eval` for a function that can safely evaluate strings
+   with expressions containing only literals.
+
 
 .. function:: execfile(filename[, globals[, locals]])
 
@@ -402,8 +451,9 @@ available.  They are listed here in alphabetical order.
    iterable if function(item)]`` if function is not ``None`` and ``[item for item
    in iterable if item]`` if function is ``None``.
 
-   See :func:`itertools.ifilterfalse` for the complementary function that returns
-   elements of *iterable* for which *function* returns false.
+   See :func:`itertools.ifilter` and :func:`itertools.ifilterfalse` for iterator
+   versions of this function, including a variation that filters for elements
+   where the *function* returns false.
 
 
 .. function:: float([x])
@@ -464,7 +514,7 @@ available.  They are listed here in alphabetical order.
 
 .. function:: getattr(object, name[, default])
 
-   Return the value of the named attributed of *object*.  *name* must be a string.
+   Return the value of the named attribute of *object*.  *name* must be a string.
    If the string is the name of one of the object's attributes, the result is the
    value of that attribute.  For example, ``getattr(x, 'foobar')`` is equivalent to
    ``x.foobar``.  If the named attribute does not exist, *default* is returned if
@@ -873,7 +923,7 @@ available.  They are listed here in alphabetical order.
 
    *fget* is a function for getting an attribute value, likewise *fset* is a
    function for setting, and *fdel* a function for del'ing, an attribute.  Typical
-   use is to define a managed attribute x::
+   use is to define a managed attribute ``x``::
 
       class C(object):
           def __init__(self):
@@ -886,6 +936,9 @@ available.  They are listed here in alphabetical order.
           def delx(self):
               del self._x
           x = property(getx, setx, delx, "I'm the 'x' property.")
+
+   If then *c* is an instance of *C*, ``c.x`` will invoke the getter,
+   ``c.x = value`` will invoke the setter and ``del c.x`` the deleter.
 
    If given, *doc* will be the docstring of the property attribute. Otherwise, the
    property will copy *fget*'s docstring (if it exists).  This makes it possible to
@@ -1094,6 +1147,14 @@ available.  They are listed here in alphabetical order.
    example, ``round(0.5)`` is ``1.0`` and ``round(-0.5)`` is ``-1.0``).
 
 
+   .. note::
+
+      The behavior of :func:`round` for floats can be surprising: for example,
+      ``round(2.675, 2)`` gives ``2.67`` instead of the expected ``2.68``.
+      This is not a bug: it's a result of the fact that most decimal fractions
+      can't be represented exactly as a float.  See :ref:`tut-fp-issues` for
+      more information.
+
 .. function:: set([iterable])
    :noindex:
 
@@ -1212,10 +1273,13 @@ available.  They are listed here in alphabetical order.
 
    Sums *start* and the items of an *iterable* from left to right and returns the
    total.  *start* defaults to ``0``. The *iterable*'s items are normally numbers,
-   and are not allowed to be strings.  The fast, correct way to concatenate a
-   sequence of strings is by calling ``''.join(sequence)``. Note that
-   ``sum(range(n), m)`` is equivalent to ``reduce(operator.add, range(n), m)``
-   To add floating point values with extended precision, see :func:`math.fsum`\.
+   and the start value is not allowed to be a string.
+
+   For some use cases, there are good alternatives to :func:`sum`.
+   The preferred, fast way to concatenate a sequence of strings is by calling
+   ``''.join(sequence)``.  To add floating point values with extended precision,
+   see :func:`math.fsum`\.  To concatenate a series of iterables, consider using
+   :func:`itertools.chain`.
 
    .. versionadded:: 2.3
 

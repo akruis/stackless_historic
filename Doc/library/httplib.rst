@@ -73,9 +73,8 @@ The module provides the following classes:
    formatted file that contains your private key. *cert_file* is a PEM formatted
    certificate chain file.
 
-   .. note::
-
-      This does not do any certificate verification.
+   .. warning::
+      This does not do any verification of the server's certificate.
 
    .. versionadded:: 2.0
 
@@ -526,6 +525,9 @@ HTTPResponse Objects
 
    .. versionadded:: 2.4
 
+.. method:: HTTPResponse.fileno()
+
+   Returns the ``fileno`` of the underlying socket.
 
 .. attribute:: HTTPResponse.msg
 

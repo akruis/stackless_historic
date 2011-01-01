@@ -126,7 +126,7 @@ class SysModuleTest(unittest.TestCase):
         try:
             sys.exit(0)
         except SystemExit, exc:
-            self.assertEquals(exc.code, 0)
+            self.assertEqual(exc.code, 0)
         except:
             self.fail("wrong exception")
         else:
@@ -137,7 +137,7 @@ class SysModuleTest(unittest.TestCase):
         try:
             sys.exit(42)
         except SystemExit, exc:
-            self.assertEquals(exc.code, 42)
+            self.assertEqual(exc.code, 42)
         except:
             self.fail("wrong exception")
         else:
@@ -147,7 +147,7 @@ class SysModuleTest(unittest.TestCase):
         try:
             sys.exit((42,))
         except SystemExit, exc:
-            self.assertEquals(exc.code, 42)
+            self.assertEqual(exc.code, 42)
         except:
             self.fail("wrong exception")
         else:
@@ -157,7 +157,7 @@ class SysModuleTest(unittest.TestCase):
         try:
             sys.exit("exit")
         except SystemExit, exc:
-            self.assertEquals(exc.code, "exit")
+            self.assertEqual(exc.code, "exit")
         except:
             self.fail("wrong exception")
         else:
@@ -167,7 +167,7 @@ class SysModuleTest(unittest.TestCase):
         try:
             sys.exit((17, 23))
         except SystemExit, exc:
-            self.assertEquals(exc.code, (17, 23))
+            self.assertEqual(exc.code, (17, 23))
         except:
             self.fail("wrong exception")
         else:
@@ -211,15 +211,15 @@ class SysModuleTest(unittest.TestCase):
             # can't check more than the type, as the user might have changed it
             self.assertIsInstance(sys.getdefaultencoding(), str)
 
-    # testing sys.settrace() is done in test_trace.py
-    # testing sys.setprofile() is done in test_profile.py
+    # testing sys.settrace() is done in test_sys_settrace.py
+    # testing sys.setprofile() is done in test_sys_setprofile.py
 
     def test_setcheckinterval(self):
         self.assertRaises(TypeError, sys.setcheckinterval)
         orig = sys.getcheckinterval()
         for n in 0, 100, 120, orig: # orig last to restore starting state
             sys.setcheckinterval(n)
-            self.assertEquals(sys.getcheckinterval(), n)
+            self.assertEqual(sys.getcheckinterval(), n)
 
     def test_recursionlimit(self):
         self.assertRaises(TypeError, sys.getrecursionlimit, 42)

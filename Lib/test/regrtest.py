@@ -133,11 +133,7 @@ resources to test.  Currently only the following are defined:
     decimal -   Test the decimal module against a large suite that
                 verifies compliance with standards.
 
-    compiler -  Test the compiler package by compiling all the source
-                in the standard library and test suite.  This takes
-                a long time.  Enabling this resource also allows
-                test_tokenize to verify round-trip lexing on every
-                file in the test library.
+    cpu -       Used for certain CPU-heavy tests.
 
     subprocess  Run all tests for the subprocess module.
 
@@ -215,7 +211,7 @@ INTERRUPTED = -4
 from test import test_support
 
 RESOURCE_NAMES = ('audio', 'curses', 'largefile', 'network', 'bsddb',
-                  'decimal', 'compiler', 'subprocess', 'urlfetch', 'gui',
+                  'decimal', 'cpu', 'subprocess', 'urlfetch', 'gui',
                   'xpickle')
 
 TEMPDIR = os.path.abspath(tempfile.gettempdir())
@@ -365,9 +361,6 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
         usage(2, "-T and -j don't go together!")
     if use_mp and findleaks:
         usage(2, "-l and -j don't go together!")
-    if use_mp and max(sys.flags):
-        # TODO: inherit the environment and the flags
-        print "Warning: flags and environment variables are ignored with -j option"
 
     good = []
     bad = []
@@ -496,6 +489,8 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
                 )
                 yield (test, args_tuple)
         pending = tests_and_args()
+        opt_args = test_support.args_from_interpreter_flags()
+        base_cmd = [sys.executable] + opt_args + ['-m', 'test.regrtest']
         def work():
             # A worker thread.
             try:
@@ -506,10 +501,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=False,
                         output.put((None, None, None, None))
                         return
                     # -E is needed by some tests, e.g. test_import
-                    popen = Popen([sys.executable, '-E', '-m', 'test.regrtest',
-                                   '--slaveargs', json.dumps(args_tuple)],
+                    popen = Popen(base_cmd + ['--slaveargs', json.dumps(args_tuple)],
                                    stdout=PIPE, stderr=PIPE,
-                                   universal_newlines=True, close_fds=True)
+                                   universal_newlines=True,
+                                   close_fds=(os.name != 'nt'))
                     stdout, stderr = popen.communicate()
                     # Strip last refcount output line if it exists, since it
                     # comes from the shutdown of the interpreter in the subcommand.
@@ -761,7 +756,7 @@ class saved_test_environment:
     # the corresponding method names.
 
     resources = ('sys.argv', 'cwd', 'sys.stdin', 'sys.stdout', 'sys.stderr',
-                 'os.environ', 'sys.path')
+                 'os.environ', 'sys.path', 'asyncore.socket_map')
 
     def get_sys_argv(self):
         return id(sys.argv), sys.argv, sys.argv[:]
@@ -802,6 +797,16 @@ class saved_test_environment:
         sys.path = saved_path[1]
         sys.path[:] = saved_path[2]
 
+    def get_asyncore_socket_map(self):
+        asyncore = sys.modules.get('asyncore')
+        # XXX Making a copy keeps objects alive until __exit__ gets called.
+        return asyncore and asyncore.socket_map.copy() or {}
+    def restore_asyncore_socket_map(self, saved_map):
+        asyncore = sys.modules.get('asyncore')
+        if asyncore is not None:
+            asyncore.close_all(ignore_all=True)
+            asyncore.socket_map.update(saved_map)
+
     def resource_info(self):
         for name in self.resources:
             method_suffix = name.replace('.', '_')
@@ -815,9 +820,11 @@ class saved_test_environment:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        saved_values = self.saved_values
+        del self.saved_values
         for name, get, restore in self.resource_info():
             current = get()
-            original = self.saved_values[name]
+            original = saved_values.pop(name)
             # Check for changes to the resource's value
             if current != original:
                 self.changed = True
@@ -919,6 +926,10 @@ def runtest_inner(test, verbose, quiet,
 def cleanup_test_droppings(testname, verbose):
     import shutil
     import stat
+    import gc
+
+    # First kill any dangling references to open files etc.
+    gc.collect()
 
     # Try to clean up junk commonly left behind.  While tests shouldn't leave
     # any files or directories behind, when a test fails that can be tedious
@@ -1248,6 +1259,7 @@ _expectations = {
         test_bsddb3
         test_curses
         test_epoll
+        test_gdb
         test_gdbm
         test_largefile
         test_locale
@@ -1491,7 +1503,13 @@ class _ExpectedSkips:
         return self.expected
 
 if __name__ == '__main__':
-    # Simplification for findtestdir().
+    # findtestdir() gets the dirname out of __file__, so we have to make it
+    # absolute before changing the working directory.
+    # For example __file__ may be relative when running trace or profile.
+    # See issue #9323.
+    __file__ = os.path.abspath(__file__)
+
+    # sanity check
     assert __file__ == os.path.abspath(sys.argv[0])
 
     # When tests are run from the Python build directory, it is best practice

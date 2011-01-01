@@ -81,6 +81,24 @@ This module defines one class called :class:`Popen`:
 
       Popen(['/bin/sh', '-c', args[0], args[1], ...])
 
+   .. warning::
+
+      Executing shell commands that incorporate unsanitized input from an
+      untrusted source makes a program vulnerable to `shell injection
+      <http://en.wikipedia.org/wiki/Shell_injection#Shell_injection>`_,
+      a serious security flaw which can result in arbitrary command execution.
+      For this reason, the use of *shell=True* is **strongly discouraged** in cases
+      where the command string is constructed from external input::
+
+         >>> from subprocess import call
+         >>> filename = input("What file would you like to display?\n")
+         What file would you like to display?
+         non_existent; rm -rf / #
+         >>> call("cat " + filename, shell=True) # Uh-oh. This will end badly...
+
+      *shell=False* does not suffer from this vulnerability; the above Note may be
+      helpful in getting code using *shell=False* to work.
+
    On Windows: the :class:`Popen` class uses CreateProcess() to execute the child
    program, which operates on strings.  If *args* is a sequence, it will be
    converted to a string using the :meth:`list2cmdline` method.  Please note that
@@ -254,7 +272,7 @@ Exceptions
 Exceptions raised in the child process, before the new program has started to
 execute, will be re-raised in the parent.  Additionally, the exception object
 will have one extra attribute called :attr:`child_traceback`, which is a string
-containing traceback information from the childs point of view.
+containing traceback information from the child's point of view.
 
 The most common exception raised is :exc:`OSError`.  This occurs, for example,
 when trying to execute a non-existent file.  Applications should prepare for
@@ -551,7 +569,7 @@ Return code handling translates as follows::
    pipe = os.popen("cmd", 'w')
    ...
    rc = pipe.close()
-   if rc is not None and rc % 256:
+   if rc is not None and rc >> 8:
        print "There were some errors"
    ==>
    process = Popen("cmd", 'w', shell=True, stdin=PIPE)

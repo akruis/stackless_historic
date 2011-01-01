@@ -146,8 +146,8 @@ commands.
 Creating dumb built distributions
 =================================
 
-**\*\*** Need to document absolute vs. prefix-relative packages here, but first
-I have to implement it! **\*\***
+.. XXX Need to document absolute vs. prefix-relative packages here, but first
+       I have to implement it!
 
 
 .. _creating-rpms:
@@ -176,7 +176,7 @@ easily specify multiple formats in one run.  If you need to do both, you can
 explicitly specify multiple :command:`bdist_\*` commands and their options::
 
    python setup.py bdist_rpm --packager="John Doe <jdoe@example.org>" \
-                   bdist_wininst --target_version="2.0"
+                   bdist_wininst --target-version="2.0"
 
 Creating RPM packages is driven by a :file:`.spec` file, much as using the
 Distutils is driven by the setup script.  To make your life easier, the
@@ -358,7 +358,7 @@ would create a 64bit installation executable on your 32bit version of Windows.
 
 To cross-compile, you must download the Python source code and cross-compile
 Python itself for the platform you are targetting - it is not possible from a
-binary installtion of Python (as the .lib etc file for other platforms are
+binary installation of Python (as the .lib etc file for other platforms are
 not included.)  In practice, this means the user of a 32 bit operating
 system will need to use Visual Studio 2008 to open the
 :file:`PCBuild/PCbuild.sln` solution in the Python source tree and build the

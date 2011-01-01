@@ -76,10 +76,10 @@ source distribution:
   :option:`packages` options
 
 * all C source files mentioned in the :option:`ext_modules` or
-  :option:`libraries` options (
+  :option:`libraries` options
 
-  **\*\*** getting C library sources currently broken---no
-  :meth:`get_source_files` method in :file:`build_clib.py`! **\*\***)
+  .. XXX Getting C library sources is currently broken -- no
+     :meth:`get_source_files` method in :file:`build_clib.py`!
 
 * scripts identified by the :option:`scripts` option
   See :ref:`distutils-installing-scripts`.
@@ -110,6 +110,10 @@ If you prefer to roll your own manifest file, the format is simple: one filename
 per line, regular files (or symlinks to them) only.  If you do supply your own
 :file:`MANIFEST`, you must specify everything: the default set of files
 described above does not apply in this case.
+
+.. versionadded:: 2.7
+   :file:`MANIFEST` files start with a comment indicating they are generated.
+   Files without this comment are not overwritten or removed.
 
 See :ref:`manifest_template` section for a syntax reference.
 
@@ -142,7 +146,7 @@ source distribution::
 
    python setup.py sdist --manifest-only
 
-:option:`-o` is a sortcut for :option:`--manifest-only`.
+:option:`-o` is a shortcut for :option:`--manifest-only`.
 
 .. _manifest_template:
 
@@ -268,3 +272,7 @@ character, and ``[range]`` matches any of the characters in *range* (e.g.,
 character" is platform-specific: on Unix it is anything except slash; on Windows
 anything except backslash or colon.
 
+.. versionchanged:: 2.7
+    An existing generated :file:`MANIFEST` will be regenerated without
+    :command:`sdist` comparing its modification time to the one of
+    :file:`MANIFEST.in` or :file:`setup.py`.

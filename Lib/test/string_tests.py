@@ -62,7 +62,7 @@ class CommonTest(unittest.TestCase):
                 pass
             object = subtype(object)
             realresult = getattr(object, methodname)(*args)
-            self.assert_(object is not realresult)
+            self.assertTrue(object is not realresult)
 
     # check that object.method(*args) raises exc
     def checkraises(self, exc, object, methodname, *args):
@@ -254,7 +254,7 @@ class CommonTest(unittest.TestCase):
                 r2 = j in i
                 self.assertEqual(r1, r2)
                 if loc != -1:
-                    self.assertEqual(i[loc:loc+len(j)], j)
+                    self.assertEqual(i[loc:loc+len(j)], self.fixtype(j))
 
         # issue 7458
         self.checkequal(-1, 'ab', 'rfind', 'xxx', sys.maxsize + 1, 0)
@@ -1119,7 +1119,7 @@ class MixinStrUnicodeUserStringTest:
             format = '%%.%if' % prec
             value = 0.01
             for x in xrange(60):
-                value = value * 3.141592655 / 3.0 * 10.0
+                value = value * 3.14159265359 / 3.0 * 10.0
                 self.checkcall(format, "__mod__", value)
 
     def test_inplace_rewrites(self):
@@ -1243,34 +1243,34 @@ class MixinStrUnicodeTest:
             pass
         s1 = subclass("abcd")
         s2 = t().join([s1])
-        self.assert_(s1 is not s2)
-        self.assert_(type(s2) is t)
+        self.assertTrue(s1 is not s2)
+        self.assertTrue(type(s2) is t)
 
         s1 = t("abcd")
         s2 = t().join([s1])
-        self.assert_(s1 is s2)
+        self.assertTrue(s1 is s2)
 
         # Should also test mixed-type join.
         if t is unicode:
             s1 = subclass("abcd")
             s2 = "".join([s1])
-            self.assert_(s1 is not s2)
-            self.assert_(type(s2) is t)
+            self.assertTrue(s1 is not s2)
+            self.assertTrue(type(s2) is t)
 
             s1 = t("abcd")
             s2 = "".join([s1])
-            self.assert_(s1 is s2)
+            self.assertTrue(s1 is s2)
 
         elif t is str:
             s1 = subclass("abcd")
             s2 = u"".join([s1])
-            self.assert_(s1 is not s2)
-            self.assert_(type(s2) is unicode) # promotes!
+            self.assertTrue(s1 is not s2)
+            self.assertTrue(type(s2) is unicode) # promotes!
 
             s1 = t("abcd")
             s2 = u"".join([s1])
-            self.assert_(s1 is not s2)
-            self.assert_(type(s2) is unicode) # promotes!
+            self.assertTrue(s1 is not s2)
+            self.assertTrue(type(s2) is unicode) # promotes!
 
         else:
             self.fail("unexpected type for MixinStrUnicodeTest %r" % t)

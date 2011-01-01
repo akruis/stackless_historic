@@ -7,6 +7,7 @@ import urlparse
 RFC1808_BASE = "http://a/b/c/d;p?q#f"
 RFC2396_BASE = "http://a/b/c/d;p?q"
 RFC3986_BASE = 'http://a/b/c/d;p?q'
+SIMPLE_BASE  = 'http://a/b/c/d'
 
 # A list of test cases.  Each test case is a a two-tuple that contains
 # a string with the query and a dictionary with the expected result.
@@ -294,6 +295,37 @@ class UrlParseTestCase(unittest.TestCase):
         #self.checkJoin(RFC3986_BASE, 'http:g','http:g') # strict parser
         self.checkJoin(RFC3986_BASE, 'http:g','http://a/b/c/g') # relaxed parser
 
+    def test_urljoins(self):
+        self.checkJoin(SIMPLE_BASE, 'g:h','g:h')
+        self.checkJoin(SIMPLE_BASE, 'http:g','http://a/b/c/g')
+        self.checkJoin(SIMPLE_BASE, 'http:','http://a/b/c/d')
+        self.checkJoin(SIMPLE_BASE, 'g','http://a/b/c/g')
+        self.checkJoin(SIMPLE_BASE, './g','http://a/b/c/g')
+        self.checkJoin(SIMPLE_BASE, 'g/','http://a/b/c/g/')
+        self.checkJoin(SIMPLE_BASE, '/g','http://a/g')
+        self.checkJoin(SIMPLE_BASE, '//g','http://g')
+        self.checkJoin(SIMPLE_BASE, '?y','http://a/b/c/d?y')
+        self.checkJoin(SIMPLE_BASE, 'g?y','http://a/b/c/g?y')
+        self.checkJoin(SIMPLE_BASE, 'g?y/./x','http://a/b/c/g?y/./x')
+        self.checkJoin(SIMPLE_BASE, '.','http://a/b/c/')
+        self.checkJoin(SIMPLE_BASE, './','http://a/b/c/')
+        self.checkJoin(SIMPLE_BASE, '..','http://a/b/')
+        self.checkJoin(SIMPLE_BASE, '../','http://a/b/')
+        self.checkJoin(SIMPLE_BASE, '../g','http://a/b/g')
+        self.checkJoin(SIMPLE_BASE, '../..','http://a/')
+        self.checkJoin(SIMPLE_BASE, '../../g','http://a/g')
+        self.checkJoin(SIMPLE_BASE, '../../../g','http://a/../g')
+        self.checkJoin(SIMPLE_BASE, './../g','http://a/b/g')
+        self.checkJoin(SIMPLE_BASE, './g/.','http://a/b/c/g/')
+        self.checkJoin(SIMPLE_BASE, '/./g','http://a/./g')
+        self.checkJoin(SIMPLE_BASE, 'g/./h','http://a/b/c/g/h')
+        self.checkJoin(SIMPLE_BASE, 'g/../h','http://a/b/c/h')
+        self.checkJoin(SIMPLE_BASE, 'http:g','http://a/b/c/g')
+        self.checkJoin(SIMPLE_BASE, 'http:','http://a/b/c/d')
+        self.checkJoin(SIMPLE_BASE, 'http:?y','http://a/b/c/d?y')
+        self.checkJoin(SIMPLE_BASE, 'http:g?y','http://a/b/c/g?y')
+        self.checkJoin(SIMPLE_BASE, 'http:g?y/./x','http://a/b/c/g?y/./x')
+
     def test_RFC2732(self):
         for url, hostname, port in [
             ('http://Test.python.org:5432/foo/', 'test.python.org', 5432),
@@ -446,6 +478,26 @@ class UrlParseTestCase(unittest.TestCase):
         self.assertEqual(urlparse.urlparse("x-newscheme://foo.com/stuff"),
                          ('x-newscheme','foo.com','/stuff','','',''))
 
+    def test_withoutscheme(self):
+        # Test urlparse without scheme
+        # Issue 754016: urlparse goes wrong with IP:port without scheme
+        # RFC 1808 specifies that netloc should start with //, urlparse expects
+        # the same, otherwise it classifies the portion of url as path.
+        self.assertEqual(urlparse.urlparse("path"),
+                ('','','path','','',''))
+        self.assertEqual(urlparse.urlparse("//www.python.org:80"),
+                ('','www.python.org:80','','','',''))
+        self.assertEqual(urlparse.urlparse("http://www.python.org:80"),
+                ('http','www.python.org:80','','','',''))
+
+    def test_portseparator(self):
+        # Issue 754016 makes changes for port separator ':' from scheme separator
+        self.assertEqual(urlparse.urlparse("path:80"),
+                ('','','path:80','','',''))
+        self.assertEqual(urlparse.urlparse("http:"),('http','','','','',''))
+        self.assertEqual(urlparse.urlparse("https:"),('https','','','','',''))
+        self.assertEqual(urlparse.urlparse("http://www.python.org:80"),
+                ('http','www.python.org:80','','','',''))
 
 
 def test_main():

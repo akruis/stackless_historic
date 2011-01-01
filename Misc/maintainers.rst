@@ -11,6 +11,10 @@ final judgement on a feature or bug.  If no active maintainer is listed for
 a given module, then questionable changes should go to python-dev, while
 any other issues can and should be decided by any committer.
 
+Unless a name is followed by a '*', you should never assign an issue to
+that person, only make them nosy.  Names followed by a '*' may be assigned
+issues involving the module or topic for which the name has a '*'.
+
 The Platform and Interest Area tables list broader fields in which various
 people have expertise.  These people can also be contacted for help,
 opinions, and decisions when issues involve their areas.
@@ -21,8 +25,8 @@ in this list by placing the word 'inactive' in parenthesis behind their
 tracker id.  They are of course free to remove that inactive mark at
 any time.
 
-Committers should update this table as their areas of expertise widen.
-New topics may be added to the third table at will.
+Committers should update these tables as their areas of expertise widen.
+New topics may be added to the Interest Area table at will.
 
 The existence of this list is not meant to indicate that these people
 *must* be contacted for decisions; it is, rather, a resource to be used
@@ -43,14 +47,15 @@ __builtin__
 __future__
 __main__            gvanrossum
 _dummy_thread       brett.cannon
-_thread
+_thread             pitrou
+_winreg             brian.curtin*, stutzbach
 abc
 aifc                r.david.murray
 argparse            bethard
 array
 ast
-asynchat            josiahcarlson, giampaolo.rodola
-asyncore            josiahcarlson, giampaolo.rodola
+asynchat            josiahcarlson, giampaolo.rodola, stutzbach
+asyncore            josiahcarlson, giampaolo.rodola, stutzbach
 atexit
 audioop
 base64
@@ -70,10 +75,10 @@ cmd
 code
 codecs              lemburg, doerwalter
 codeop
-collections         rhettinger
+collections         rhettinger, stutzbach
 colorsys
 compileall
-ConfigParser
+ConfigParser        lukasz.langa
 contextlib
 copy                alexandre.vassalotti
 copy_reg            alexandre.vassalotti
@@ -81,16 +86,16 @@ cProfile
 crypt
 csv
 ctypes              theller
-curses              andrew.kuchling
+curses
 datetime            alexander.belopolsky
 dbm
 decimal             facundobatista, rhettinger, mark.dickinson
 difflib             tim_one
 dis
-distutils           tarek
+distutils           tarek*, eric.araujo*
 doctest             tim_one (inactive)
 dummy_threading     brett.cannon
-email               barry, r.david.murray
+email               barry, r.david.murray*
 encodings           lemburg, loewis
 errno
 exceptions
@@ -111,7 +116,7 @@ glob
 grp
 gzip
 hashlib
-heapq               rhettinger
+heapq               rhettinger, stutzbach
 hmac
 htmlentitydefs
 htmllib
@@ -123,19 +128,19 @@ imghdr
 imp
 importlib           brett.cannon
 inspect
-io                  pitrou, benjamin.peterson
+io                  pitrou, benjamin.peterson, stutzbach
 itertools           rhettinger
 json                bob.ippolito (inactive)
 keyword
 lib2to3             benjamin.peterson
 linecache
 locale              loewis, lemburg
-logging             vsajip
+logging             vinay.sajip
 macpath
-mailbox             andrew.kuchling
+mailbox
 mailcap
 marshal
-math                mark.dickinson, rhettinger
+math                mark.dickinson, rhettinger, stutzbach
 mimetypes
 mmap
 modulefinder        theller, jvr
@@ -151,7 +156,7 @@ optparse            aronacher
 os                  loewis
 ossaudiodev
 parser
-pdb
+pdb                 georg.brandl*
 pickle              alexandre.vassalotti, pitrou
 pickletools         alexandre.vassalotti
 pipes
@@ -161,7 +166,8 @@ plistlib
 poplib
 posix
 pprint              fdrake
-pstats
+profile             georg.brandl
+pstats              georg.brandl
 pty
 pwd
 py_compile
@@ -171,7 +177,7 @@ pydoc
 Queue               rhettinger
 quopri
 random              rhettinger
-re                  effbot (inactive), pitrou
+re                  effbot (inactive), pitrou, ezio.melotti
 readline
 reprlib
 resource
@@ -194,7 +200,7 @@ spwd
 sqlite3             ghaering
 ssl                 janssen, pitrou, giampaolo.rodola
 stat
-string
+string              georg.brandl*
 stringprep
 struct              mark.dickinson
 subprocess          astrand (inactive)
@@ -207,18 +213,18 @@ syslog              jafo
 tabnanny            tim_one
 tarfile             lars.gustaebel
 telnetlib
-tempfile
+tempfile            georg.brandl
 termios
 test
-textwrap
-threading
+textwrap            georg.brandl
+threading           pitrou
 time                alexander.belopolsky
-timeit
+timeit              georg.brandl
 Tkinter             gpolo
 token               georg.brandl
 tokenize
-trace
-traceback           georg.brandl
+trace               alexander.belopolsky
+traceback           georg.brandl*
 tty
 turtle              gregorlingl
 types
@@ -229,16 +235,22 @@ uu
 uuid
 warnings            brett.cannon
 wave
-weakref             fdrake
+weakref             fdrake, pitrou
 webbrowser          georg.brandl
-winreg
 winsound            effbot (inactive)
 wsgiref             pje
 xdrlib
-xml                 loewis
+xml.dom
+xml.dom.minidom
+xml.dom.pulldom
 xml.etree           effbot (inactive)
+xml.parsers.expat
+xml.sax
+xml.sax.handler
+xml.sax.saxutils
+xml.sax.xmlreader
 xmlrpc              loewis
-zipfile
+zipfile             alanmcintyre
 zipimport
 zlib
 ==================  ===========
@@ -248,13 +260,14 @@ zlib
 Tool                Maintainers
 ------------------  -----------
 pybench             lemburg
+==================  ===========
 
 
 ==================  ===========
 Platform            Maintainers
 ------------------  -----------
 AIX
-Cygwin              jlt63
+Cygwin              jlt63, stutzbach
 FreeBSD
 HP-UX
 Linux
@@ -262,7 +275,7 @@ Mac                 ronaldoussoren
 NetBSD1
 OS2/EMX             aimacintyre
 Solaris
-Windows
+Windows             tim.golden, brian.curtin
 ==================  ===========
 
 
@@ -273,6 +286,7 @@ algorithms
 ast/compiler        ncoghlan, benjamin.peterson, brett.cannon, georg.brandl
 autoconf/makefiles
 bsd
+bug tracker         ezio.melotti
 buildbots
 bytecode            pitrou
 data formats        mark.dickinson, georg.brandl
@@ -281,9 +295,9 @@ documentation       georg.brandl, ezio.melotti
 GUI
 i18n                lemburg
 import machinery    brett.cannon, ncoghlan
-io                  pitrou, benjamin.peterson
+io                  pitrou, benjamin.peterson, stutzbach
 locale              lemburg, loewis
-mathematics         mark.dickinson, eric.smith, lemburg
+mathematics         mark.dickinson, eric.smith, lemburg, stutzbach
 memory management   tim_one, lemburg
 networking          giampaolo.rodola
 packaging           tarek, lemburg
@@ -291,10 +305,9 @@ py3 transition      benjamin.peterson
 release management  tarek, lemburg, benjamin.peterson, barry, loewis,
                     gvanrossum, anthonybaxter
 str.format          eric.smith
-time and dates      lemburg
 testing             michael.foord, pitrou, giampaolo.rodola
-threads
-tracker
+threads             pitrou
+time and dates      lemburg
 unicode             lemburg, ezio.melotti, haypo
 version control
 ==================  ===========

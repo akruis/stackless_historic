@@ -853,8 +853,8 @@ class Popen(object):
                 startupinfo.dwFlags |= _subprocess.STARTF_USESHOWWINDOW
                 startupinfo.wShowWindow = _subprocess.SW_HIDE
                 comspec = os.environ.get("COMSPEC", "cmd.exe")
-                args = comspec + " /c " + args
-                if (_subprocess.GetVersion() >= 0x80000000L or
+                args = '{} /c "{}"'.format (comspec, args)
+                if (_subprocess.GetVersion() >= 0x80000000 or
                         os.path.basename(comspec).lower() == "command.com"):
                     # Win9x, or using command.com on NT. We need to
                     # use the w9xpopen intermediate program. For more
@@ -886,26 +886,25 @@ class Popen(object):
                 # translate errno using _sys_errlist (or simliar), but
                 # how can this be done from Python?
                 raise WindowsError(*e.args)
+            finally:
+                # Child is launched. Close the parent's copy of those pipe
+                # handles that only the child should have open.  You need
+                # to make sure that no handles to the write end of the
+                # output pipe are maintained in this process or else the
+                # pipe will not close when the child process exits and the
+                # ReadFile will hang.
+                if p2cread is not None:
+                    p2cread.Close()
+                if c2pwrite is not None:
+                    c2pwrite.Close()
+                if errwrite is not None:
+                    errwrite.Close()
 
             # Retain the process handle, but close the thread handle
             self._child_created = True
             self._handle = hp
             self.pid = pid
             ht.Close()
-
-            # Child is launched. Close the parent's copy of those pipe
-            # handles that only the child should have open.  You need
-            # to make sure that no handles to the write end of the
-            # output pipe are maintained in this process or else the
-            # pipe will not close when the child process exits and the
-            # ReadFile will hang.
-            if p2cread is not None:
-                p2cread.Close()
-            if c2pwrite is not None:
-                c2pwrite.Close()
-            if errwrite is not None:
-                errwrite.Close()
-
 
         def _internal_poll(self, _deadstate=None,
                 _WaitForSingleObject=_subprocess.WaitForSingleObject,
@@ -994,7 +993,7 @@ class Popen(object):
             elif sig == signal.CTRL_BREAK_EVENT:
                 os.kill(self.pid, signal.CTRL_BREAK_EVENT)
             else:
-                raise ValueError("Only SIGTERM is supported on Windows")
+                raise ValueError("Unsupported signal: {}".format(sig))
 
         def terminate(self):
             """Terminates the process
@@ -1091,6 +1090,8 @@ class Popen(object):
 
             if shell:
                 args = ["/bin/sh", "-c"] + args
+                if executable:
+                    args[0] = executable
 
             if executable is None:
                 executable = args[0]

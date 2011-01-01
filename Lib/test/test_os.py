@@ -11,6 +11,8 @@ import signal
 import subprocess
 import time
 from test import test_support
+import mmap
+import uuid
 
 warnings.filterwarnings("ignore", "tempnam", RuntimeWarning, __name__)
 warnings.filterwarnings("ignore", "tmpnam", RuntimeWarning, __name__)
@@ -185,8 +187,8 @@ class StatAttributeTests(unittest.TestCase):
         result = os.stat(self.fname)
 
         # Make sure direct access works
-        self.assertEquals(result[stat.ST_SIZE], 3)
-        self.assertEquals(result.st_size, 3)
+        self.assertEqual(result[stat.ST_SIZE], 3)
+        self.assertEqual(result.st_size, 3)
 
         # Make sure all the attributes are there
         members = dir(result)
@@ -197,8 +199,8 @@ class StatAttributeTests(unittest.TestCase):
                     def trunc(x): return int(x)
                 else:
                     def trunc(x): return x
-                self.assertEquals(trunc(getattr(result, attr)),
-                                  result[getattr(stat, name)])
+                self.assertEqual(trunc(getattr(result, attr)),
+                                 result[getattr(stat, name)])
                 self.assertIn(attr, members)
 
         try:
@@ -252,13 +254,13 @@ class StatAttributeTests(unittest.TestCase):
                 return
 
         # Make sure direct access works
-        self.assertEquals(result.f_bfree, result[3])
+        self.assertEqual(result.f_bfree, result[3])
 
         # Make sure all the attributes are there.
         members = ('bsize', 'frsize', 'blocks', 'bfree', 'bavail', 'files',
                     'ffree', 'favail', 'flag', 'namemax')
         for value, member in enumerate(members):
-            self.assertEquals(getattr(result, 'f_' + member), result[value])
+            self.assertEqual(getattr(result, 'f_' + member), result[value])
 
         # Make sure that assignment really fails
         try:
@@ -293,7 +295,7 @@ class StatAttributeTests(unittest.TestCase):
         # time stamps in stat, but not in utime.
         os.utime(test_support.TESTFN, (st.st_atime, int(st.st_mtime-delta)))
         st2 = os.stat(test_support.TESTFN)
-        self.assertEquals(st2.st_mtime, int(st.st_mtime-delta))
+        self.assertEqual(st2.st_mtime, int(st.st_mtime-delta))
 
     # Restrict test to Win32, since there is no guarantee other
     # systems support centiseconds
@@ -310,7 +312,7 @@ class StatAttributeTests(unittest.TestCase):
             def test_1565150(self):
                 t1 = 1159195039.25
                 os.utime(self.fname, (t1, t1))
-                self.assertEquals(os.stat(self.fname).st_mtime, t1)
+                self.assertEqual(os.stat(self.fname).st_mtime, t1)
 
         def test_1686475(self):
             # Verify that an open file can be stat'ed
@@ -342,8 +344,9 @@ class EnvironTests(mapping_tests.BasicTestMappingProtocol):
     def test_update2(self):
         if os.path.exists("/bin/sh"):
             os.environ.update(HELLO="World")
-            value = os.popen("/bin/sh -c 'echo $HELLO'").read().strip()
-            self.assertEquals(value, "World")
+            with os.popen("/bin/sh -c 'echo $HELLO'") as popen:
+                value = popen.read().strip()
+                self.assertEqual(value, "World")
 
 class WalkTests(unittest.TestCase):
     """Tests for os.walk()."""
@@ -706,6 +709,9 @@ class Win32KillTests(unittest.TestCase):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 stdin=subprocess.PIPE)
+        self.addCleanup(proc.stdout.close)
+        self.addCleanup(proc.stderr.close)
+        self.addCleanup(proc.stdin.close)
 
         count, max = 0, 100
         while count < max and proc.poll() is None:
@@ -736,13 +742,23 @@ class Win32KillTests(unittest.TestCase):
         self._kill(100)
 
     def _kill_with_event(self, event, name):
+        tagname = "test_os_%s" % uuid.uuid1()
+        m = mmap.mmap(-1, 1, tagname)
+        m[0] = '0'
         # Run a script which has console control handling enabled.
         proc = subprocess.Popen([sys.executable,
                    os.path.join(os.path.dirname(__file__),
-                                "win_console_handler.py")],
+                                "win_console_handler.py"), tagname],
                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
         # Let the interpreter startup before we send signals. See #3137.
-        time.sleep(0.5)
+        count, max = 0, 20
+        while count < max and proc.poll() is None:
+            if m[0] == '1':
+                break
+            time.sleep(0.5)
+            count += 1
+        else:
+            self.fail("Subprocess didn't finish initialization")
         os.kill(proc.pid, event)
         # proc.send_signal(event) could also be done here.
         # Allow time for the signal to be passed and the process to exit.

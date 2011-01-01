@@ -45,7 +45,7 @@ class TrivialTests(unittest.TestCase):
                  ('a, b, "c", "d", "e,f", g, h', ['a', 'b', '"c"', '"d"', '"e,f"', 'g', 'h']),
                  ('a="b\\"c", d="e\\,f", g="h\\\\i"', ['a="b"c"', 'd="e,f"', 'g="h\\i"'])]
         for string, list in tests:
-            self.assertEquals(urllib2.parse_http_list(string), list)
+            self.assertEqual(urllib2.parse_http_list(string), list)
 
 
 def test_request_headers_dict():
@@ -622,22 +622,32 @@ class HandlerTests(unittest.TestCase):
         h = NullFTPHandler(data)
         o = h.parent = MockOpener()
 
-        for url, host, port, type_, dirs, filename, mimetype in [
+        for url, host, port, user, passwd, type_, dirs, filename, mimetype in [
             ("ftp://localhost/foo/bar/baz.html",
-             "localhost", ftplib.FTP_PORT, "I",
+             "localhost", ftplib.FTP_PORT, "", "", "I",
+             ["foo", "bar"], "baz.html", "text/html"),
+            ("ftp://parrot@localhost/foo/bar/baz.html",
+             "localhost", ftplib.FTP_PORT, "parrot", "", "I",
+             ["foo", "bar"], "baz.html", "text/html"),
+            ("ftp://%25parrot@localhost/foo/bar/baz.html",
+             "localhost", ftplib.FTP_PORT, "%parrot", "", "I",
+             ["foo", "bar"], "baz.html", "text/html"),
+            ("ftp://%2542parrot@localhost/foo/bar/baz.html",
+             "localhost", ftplib.FTP_PORT, "%42parrot", "", "I",
              ["foo", "bar"], "baz.html", "text/html"),
             ("ftp://localhost:80/foo/bar/",
-             "localhost", 80, "D",
+             "localhost", 80, "", "", "D",
              ["foo", "bar"], "", None),
             ("ftp://localhost/baz.gif;type=a",
-             "localhost", ftplib.FTP_PORT, "A",
+             "localhost", ftplib.FTP_PORT, "", "", "A",
              [], "baz.gif", None),  # XXX really this should guess image/gif
             ]:
             req = Request(url)
             req.timeout = None
             r = h.ftp_open(req)
             # ftp authentication not yet implemented by FTPHandler
-            self.assertTrue(h.user == h.passwd == "")
+            self.assertEqual(h.user, user)
+            self.assertEqual(h.passwd, passwd)
             self.assertEqual(h.host, socket.gethostbyname(host))
             self.assertEqual(h.port, port)
             self.assertEqual(h.dirs, dirs)
@@ -726,6 +736,8 @@ class HandlerTests(unittest.TestCase):
             ("file://ftp.example.com///foo.txt", False),
 # XXXX bug: fails with OSError, should be URLError
             ("file://ftp.example.com/foo.txt", False),
+            ("file://somehost//foo/something.txt", True),
+            ("file://localhost//foo/something.txt", False),
             ]:
             req = Request(url)
             try:
@@ -736,6 +748,7 @@ class HandlerTests(unittest.TestCase):
             else:
                 self.assertTrue(o.req is req)
                 self.assertEqual(req.type, "ftp")
+            self.assertEqual(req.type is "ftp", ftp)
 
     def test_http(self):
 
@@ -825,6 +838,25 @@ class HandlerTests(unittest.TestCase):
             p_ds_req = h.do_request_(ds_req)
             self.assertEqual(p_ds_req.unredirected_hdrs["Host"],"example.com")
 
+    def test_fixpath_in_weirdurls(self):
+        # Issue4493: urllib2 to supply '/' when to urls where path does not
+        # start with'/'
+
+        h = urllib2.AbstractHTTPHandler()
+        o = h.parent = MockOpener()
+
+        weird_url = 'http://www.python.org?getspam'
+        req = Request(weird_url)
+        newreq = h.do_request_(req)
+        self.assertEqual(newreq.get_host(),'www.python.org')
+        self.assertEqual(newreq.get_selector(),'/?getspam')
+
+        url_without_path = 'http://www.python.org'
+        req = Request(url_without_path)
+        newreq = h.do_request_(req)
+        self.assertEqual(newreq.get_host(),'www.python.org')
+        self.assertEqual(newreq.get_selector(),'')
+
     def test_errors(self):
         h = urllib2.HTTPErrorProcessor()
         o = h.parent = MockOpener()
@@ -859,7 +891,7 @@ class HandlerTests(unittest.TestCase):
         r = MockResponse(200, "OK", {}, "")
         newreq = h.http_request(req)
         self.assertTrue(cj.ach_req is req is newreq)
-        self.assertEquals(req.get_origin_req_host(), "example.com")
+        self.assertEqual(req.get_origin_req_host(), "example.com")
         self.assertTrue(not req.is_unverifiable())
         newr = h.http_response(req, r)
         self.assertTrue(cj.ec_req is req)
@@ -1233,6 +1265,16 @@ class RequestTests(unittest.TestCase):
         self.assertTrue(self.get.has_proxy())
         self.assertEqual("www.python.org", self.get.get_origin_req_host())
         self.assertEqual("www.perl.org", self.get.get_host())
+
+    def test_wrapped_url(self):
+        req = Request("<URL:http://www.python.org>")
+        self.assertEqual("www.python.org", req.get_host())
+
+    def test_urlwith_fragment(self):
+        req = Request("http://www.python.org/?qs=query#fragment=true")
+        self.assertEqual("/?qs=query", req.get_selector())
+        req = Request("http://www.python.org/#fun=true")
+        self.assertEqual("/", req.get_selector())
 
 
 def test_main(verbose=None):

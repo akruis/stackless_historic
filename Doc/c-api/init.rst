@@ -413,11 +413,12 @@ Thread State and the Global Interpreter Lock
 ============================================
 
 .. index::
+   single: GIL
    single: global interpreter lock
    single: interpreter lock
    single: lock, interpreter
 
-The Python interpreter is not fully thread safe.  In order to support
+The Python interpreter is not fully thread-safe.  In order to support
 multi-threaded Python programs, there's a global lock, called the :dfn:`global
 interpreter lock` or :dfn:`GIL`, that must be held by the current thread before
 it can safely access Python objects. Without the lock, even the simplest
@@ -924,13 +925,14 @@ in previous versions.
    +------------------------------+--------------------------------------+
    | :const:`PyTrace_LINE`        | Always *NULL*.                       |
    +------------------------------+--------------------------------------+
-   | :const:`PyTrace_RETURN`      | Value being returned to the caller.  |
+   | :const:`PyTrace_RETURN`      | Value being returned to the caller,  |
+   |                              | or *NULL* if caused by an exception. |
    +------------------------------+--------------------------------------+
-   | :const:`PyTrace_C_CALL`      | Name of function being called.       |
+   | :const:`PyTrace_C_CALL`      | Function object being called.        |
    +------------------------------+--------------------------------------+
-   | :const:`PyTrace_C_EXCEPTION` | Always *NULL*.                       |
+   | :const:`PyTrace_C_EXCEPTION` | Function object being called.        |
    +------------------------------+--------------------------------------+
-   | :const:`PyTrace_C_RETURN`    | Always *NULL*.                       |
+   | :const:`PyTrace_C_RETURN`    | Function object being called.        |
    +------------------------------+--------------------------------------+
 
 
@@ -975,7 +977,7 @@ in previous versions.
 .. cvar:: int PyTrace_C_EXCEPTION
 
    The value for the *what* parameter to :ctype:`Py_tracefunc` functions when a C
-   function has thrown an exception.
+   function has raised an exception.
 
 
 .. cvar:: int PyTrace_C_RETURN

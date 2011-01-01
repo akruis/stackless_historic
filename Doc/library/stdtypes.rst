@@ -224,18 +224,20 @@ Numeric Types --- :class:`int`, :class:`float`, :class:`long`, :class:`complex`
    pair: C; language
 
 There are four distinct numeric types: :dfn:`plain integers`, :dfn:`long
-integers`,  :dfn:`floating point numbers`, and :dfn:`complex numbers`. In
+integers`, :dfn:`floating point numbers`, and :dfn:`complex numbers`. In
 addition, Booleans are a subtype of plain integers. Plain integers (also just
 called :dfn:`integers`) are implemented using :ctype:`long` in C, which gives
 them at least 32 bits of precision (``sys.maxint`` is always set to the maximum
 plain integer value for the current platform, the minimum value is
-``-sys.maxint - 1``).  Long integers have unlimited precision. Floating point
-numbers are implemented using :ctype:`double` in C. All bets on their precision
-are off unless you happen to know the machine you are working with.
-
-Complex numbers have a real and imaginary part, which are each implemented using
-:ctype:`double` in C.  To extract these parts from a complex number *z*, use
-``z.real`` and ``z.imag``.
+``-sys.maxint - 1``).  Long integers have unlimited precision.  Floating point
+numbers are usually implemented using :ctype:`double` in C; information about
+the precision and internal representation of floating point numbers for the
+machine on which your program is running is available in
+:data:`sys.float_info`.  Complex numbers have a real and imaginary part, which
+are each a floating point number.  To extract these parts from a complex number
+*z*, use ``z.real`` and ``z.imag``. (The standard library includes additional
+numeric types, :mod:`fractions` that hold rationals, and :mod:`decimal` that
+hold floating-point numbers with user-definable precision.)
 
 .. index::
    pair: numeric; literals
@@ -493,12 +495,24 @@ The float type has some additional methods.
 
 .. method:: float.as_integer_ratio()
 
-    Return a pair of integers whose ratio is exactly equal to the
-    original float and with a positive denominator.  Raises
-    :exc:`OverflowError` on infinities and a :exc:`ValueError` on
-    NaNs.
+   Return a pair of integers whose ratio is exactly equal to the
+   original float and with a positive denominator.  Raises
+   :exc:`OverflowError` on infinities and a :exc:`ValueError` on
+   NaNs.
 
-    .. versionadded:: 2.6
+   .. versionadded:: 2.6
+
+.. method:: float.is_integer()
+
+   Return ``True`` if the float instance is finite with integral
+   value, and ``False`` otherwise::
+
+      >>> (-2.0).is_integer()
+      True
+      >>> (3.2).is_integer()
+      False
+
+   .. versionadded:: 2.6
 
 Two methods support conversion to
 and from hexadecimal strings.  Since Python's floats are stored
@@ -645,11 +659,11 @@ yield expression <yieldexpr>`.
 
 .. _typesseq:
 
-Sequence Types --- :class:`str`, :class:`unicode`, :class:`list`, :class:`tuple`, :class:`buffer`, :class:`xrange`
-==================================================================================================================
+Sequence Types --- :class:`str`, :class:`unicode`, :class:`list`, :class:`tuple`, :class:`bytearray`, :class:`buffer`, :class:`xrange`
+======================================================================================================================================
 
-There are six sequence types: strings, Unicode strings, lists, tuples, buffers,
-and xrange objects.
+There are seven sequence types: strings, Unicode strings, lists, tuples,
+bytearrays, buffers, and xrange objects.
 
 For other containers see the built in :class:`dict` and :class:`set` classes,
 and the :mod:`collections` module.
@@ -661,6 +675,7 @@ and the :mod:`collections` module.
    object: Unicode
    object: tuple
    object: list
+   object: bytearray
    object: buffer
    object: xrange
 
@@ -675,6 +690,8 @@ Tuples are constructed by the comma operator (not within square
 brackets), with or without enclosing parentheses, but an empty tuple
 must have the enclosing parentheses, such as ``a, b, c`` or ``()``.  A
 single item tuple must have a trailing comma, such as ``(d,)``.
+
+Bytearray objects are created with the built-in function :func:`bytearray`.
 
 Buffer objects are not directly supported by Python syntax, but can be created
 by calling the built-in function :func:`buffer`.  They don't support
@@ -721,6 +738,12 @@ are sequences of the same type; *n*, *i* and *j* are integers:
 | ``min(s)``       | smallest item of *s*           |          |
 +------------------+--------------------------------+----------+
 | ``max(s)``       | largest item of *s*            |          |
++------------------+--------------------------------+----------+
+| ``s.index(i)``   | index of the first occurence   |          |
+|                  | of *i* in *s*                  |          |
++------------------+--------------------------------+----------+
+| ``s.count(i)``   | total number of occurences of  |          |
+|                  | *i* in *s*                     |          |
 +------------------+--------------------------------+----------+
 
 Sequence types also support comparisons. In particular, tuples and lists
@@ -820,7 +843,8 @@ String Methods
 .. index:: pair: string; methods
 
 Below are listed the string methods which both 8-bit strings and
-Unicode objects support.
+Unicode objects support.  Some of them are also available on :class:`bytearray`
+objects.
 
 In addition, Python's strings support the sequence type methods
 described in the :ref:`typesseq` section. To output formatted strings
@@ -830,7 +854,8 @@ string functions based on regular expressions.
 
 .. method:: str.capitalize()
 
-   Return a copy of the string with only its first character capitalized.
+   Return a copy of the string with its first character capitalized and the
+   rest lowercased.
 
    For 8-bit strings, this method is locale-dependent.
 
@@ -1331,8 +1356,8 @@ formats in the string *must* include a parenthesised mapping key into that
 dictionary inserted immediately after the ``'%'`` character. The mapping key
 selects the value to be formatted from the mapping.  For example:
 
-   >>> print '%(language)s has %(#)03d quote types.' % \
-   ...       {'language': "Python", "#": 2}
+   >>> print '%(language)s has %(number)03d quote types.' % \
+   ...       {"language": "Python", "number": 2}
    Python has 002 quote types.
 
 In this case no ``*`` specifiers may occur in a format (since they require a
@@ -1490,11 +1515,29 @@ Mutable Sequence Types
    triple: mutable; sequence; types
    object: list
 
-List objects support additional operations that allow in-place modification of
-the object. Other mutable sequence types (when added to the language) should
-also support these operations. Strings and tuples are immutable sequence types:
-such objects cannot be modified once created. The following operations are
-defined on mutable sequence types (where *x* is an arbitrary object):
+List and :class:`bytearray` objects support additional operations that allow
+in-place modification of the object. Other mutable sequence types (when added
+to the language) should also support these operations. Strings and tuples
+are immutable sequence types: such objects cannot be modified once created.
+The following operations are defined on mutable sequence types (where *x* is
+an arbitrary object):
+
+.. index::
+   triple: operations on; sequence; types
+   triple: operations on; list; type
+   pair: subscript; assignment
+   pair: slice; assignment
+   pair: extended slice; assignment
+   statement: del
+   single: append() (list method)
+   single: extend() (list method)
+   single: count() (list method)
+   single: index() (list method)
+   single: insert() (list method)
+   single: pop() (list method)
+   single: remove() (list method)
+   single: reverse() (list method)
+   single: sort() (list method)
 
 +------------------------------+--------------------------------+---------------------+
 | Operation                    | Result                         | Notes               |
@@ -1540,23 +1583,6 @@ defined on mutable sequence types (where *x* is an arbitrary object):
 | ``s.sort([cmp[, key[,        | sort the items of *s* in place | (7)(8)(9)(10)       |
 | reverse]]])``                |                                |                     |
 +------------------------------+--------------------------------+---------------------+
-
-.. index::
-   triple: operations on; sequence; types
-   triple: operations on; list; type
-   pair: subscript; assignment
-   pair: slice; assignment
-   pair: extended slice; assignment
-   statement: del
-   single: append() (list method)
-   single: extend() (list method)
-   single: count() (list method)
-   single: index() (list method)
-   single: insert() (list method)
-   single: pop() (list method)
-   single: remove() (list method)
-   single: reverse() (list method)
-   single: sort() (list method)
 
 Notes:
 
@@ -1669,13 +1695,13 @@ There are currently two built-in set types, :class:`set` and :class:`frozenset`.
 The :class:`set` type is mutable --- the contents can be changed using methods
 like :meth:`add` and :meth:`remove`.  Since it is mutable, it has no hash value
 and cannot be used as either a dictionary key or as an element of another set.
-The :class:`frozenset` type is immutable and :term:`hashable` --- its contents cannot be
-altered after it is created; it can therefore be used as a dictionary key or as
-an element of another set.
+The :class:`frozenset` type is immutable and :term:`hashable` --- its contents
+cannot be altered after it is created; it can therefore be used as a dictionary
+key or as an element of another set.
 
-Non-empty sets (not frozensets) can be created by placing a comma-separated list
-of elements within braces, for example: ``{'jack', 'sjoerd'}``, in addition to the
-:class:`set` constructor.
+As of Python 2.7, non-empty sets (not frozensets) can be created by placing a
+comma-separated list of elements within braces, for example: ``{'jack',
+'sjoerd'}``, in addition to the :class:`set` constructor.
 
 The constructors for both classes work the same:
 
@@ -1918,15 +1944,12 @@ pairs within braces, for example: ``{'jack': 4098, 'sjoerd': 4127}`` or ``{4098:
    values are added as items to the dictionary. If a key is specified both in the
    positional argument and as a keyword argument, the value associated with the
    keyword is retained in the dictionary. For example, these all return a
-   dictionary equal to ``{"one": 2, "two": 3}``:
+   dictionary equal to ``{"one": 1, "two": 2}``:
 
-   * ``dict(one=2, two=3)``
-
-   * ``dict({'one': 2, 'two': 3})``
-
-   * ``dict(zip(('one', 'two'), (2, 3)))``
-
-   * ``dict([['two', 3], ['one', 2]])``
+   * ``dict(one=1, two=2)``
+   * ``dict({'one': 1, 'two': 2})``
+   * ``dict(zip(('one', 'two'), (1, 2)))``
+   * ``dict([['two', 2], ['one', 1]])``
 
    The first example only works for keys that are valid Python
    identifiers; the others work with any valid keys.
@@ -2098,7 +2121,7 @@ pairs within braces, for example: ``{'jack': 4098, 'sjoerd': 4127}`` or ``{4098:
       existing keys.  Return ``None``.
 
       :func:`update` accepts either another dictionary object or an iterable of
-      key/value pairs (as a tuple or other iterable of length two).  If keyword
+      key/value pairs (as tuples or other iterables of length two).  If keyword
       arguments are specified, the dictionary is then updated with those
       key/value pairs: ``d.update(red=1, blue=2)``.
 
@@ -2543,6 +2566,8 @@ the particular object.
 memoryview type
 ===============
 
+.. versionadded:: 2.7
+
 :class:`memoryview` objects allow Python code to access the internal data
 of an object that supports the buffer protocol without copying.  Memory
 is generally interpreted as simple bytes.
@@ -2553,10 +2578,18 @@ is generally interpreted as simple bytes.
    buffer protocol.  Builtin objects that support the buffer protocol include
    :class:`str` and :class:`bytearray` (but not :class:`unicode`).
 
-   ``len(view)`` returns the total number of bytes in the memoryview, *view*.
+   A :class:`memoryview` has the notion of an *element*, which is the
+   atomic memory unit handled by the originating object *obj*.  For many
+   simple types such as :class:`str` and :class:`bytearray`, an element
+   is a single byte, but other third-party types may expose larger elements.
+
+   ``len(view)`` returns the total number of elements in the memoryview,
+   *view*.  The :class:`~memoryview.itemsize` attribute will give you the
+   number of bytes in a single element.
 
    A :class:`memoryview` supports slicing to expose its data.  Taking a single
-   index will return a single byte.  Full slicing will result in a subview::
+   index will return a single element as a :class:`str` object.  Full
+   slicing will result in a subview::
 
       >>> v = memoryview('abcefg')
       >>> v[1]
@@ -2565,14 +2598,10 @@ is generally interpreted as simple bytes.
       'g'
       >>> v[1:4]
       <memory at 0x77ab28>
-      >>> str(v[1:4])
+      >>> v[1:4].tobytes()
       'bce'
-      >>> v[3:-1]
-      <memory at 0x744f18>
-      >>> str(v[4:-1])
-      'f'
 
-   If the object the memory view is over supports changing its data, the
+   If the object the memoryview is over supports changing its data, the
    memoryview supports slice assignment::
 
       >>> data = bytearray('abcefg')
@@ -2592,19 +2621,22 @@ is generally interpreted as simple bytes.
 
    Notice how the size of the memoryview object cannot be changed.
 
-
    :class:`memoryview` has two methods:
 
    .. method:: tobytes()
 
       Return the data in the buffer as a bytestring (an object of class
-      :class:`str`).
+      :class:`str`). ::
+
+         >>> m = memoryview("abc")
+         >>> m.tobytes()
+         'abc'
 
    .. method:: tolist()
 
       Return the data in the buffer as a list of integers. ::
 
-         >>> memoryview(b'abc').tolist()
+         >>> memoryview("abc").tolist()
          [97, 98, 99]
 
    There are also several readonly attributes available:

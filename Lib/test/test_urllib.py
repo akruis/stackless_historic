@@ -112,7 +112,7 @@ class ProxyTests(unittest.TestCase):
         self.env.set('NO_PROXY', 'localhost')
         proxies = urllib.getproxies_environment()
         # getproxies_environment use lowered case truncated (no '_proxy') keys
-        self.assertEquals('localhost', proxies['no'])
+        self.assertEqual('localhost', proxies['no'])
 
 
 class urlopen_HttpTests(unittest.TestCase):
@@ -381,6 +381,7 @@ class QuotingTests(unittest.TestCase):
                          "using quote(): %s != %s" % (expected, result))
         self.assertEqual(expected, result,
                          "using quote_plus(): %s != %s" % (expected, result))
+        self.assertRaises(TypeError, urllib.quote, None)
 
     def test_quoting_space(self):
         # Make sure quote() and quote_plus() handle spaces as specified in

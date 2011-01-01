@@ -8,7 +8,8 @@ Without you, I would've stopped working on Python long ago!
 
 	--Guido
 
-PS: In the standard Python distribution, this file is encoded in UTF-8.
+PS: In the standard Python distribution, this file is encoded in UTF-8
+and the list is in rough alphabetical order by last names.
 
 David Abrahams
 Jim Ahlstrom
@@ -62,7 +63,7 @@ Bill Bedford
 Reimer Behrends
 Ben Bell
 Thomas Bellman
-Alexander Belopolsky
+Alexander “Саша” Belopolsky
 Andrew Bennetts
 Andy Bensky
 Michel Van den Bergh
@@ -122,6 +123,7 @@ Tony Campbell
 Brett Cannon
 Mike Carlton
 Terry Carroll
+Lorenzo M. Catucci
 Donn Cave
 Charles Cazabon
 Per Cederqvist
@@ -143,6 +145,7 @@ Tom Christiansen
 Vadim Chugunov
 David Cinege
 Mike Clarkson
+Andrew Clegg
 Brad Clements
 Steve Clift
 Nick Coghlan
@@ -188,6 +191,7 @@ Arnaud Delobelle
 Erik Demaine
 Roger Dev
 Raghuram Devarakonda
+Catherine Devlin
 Scott Dial
 Toby Dickenson
 Mark Dickinson
@@ -239,11 +243,13 @@ Greg Ewing
 Martijn Faassen
 Andreas Faerber
 Bill Fancher
+Troy J. Farrell
 Mark Favas
 Niels Ferguson
 Sebastian Fernandez
 Vincent Fiack
 Tomer Filiba
+Jeffrey Finkelstein
 Russell Finn
 Nils Fischbeck
 Frederik Fix
@@ -263,6 +269,7 @@ Peter Funk
 Geoff Furnish
 Ulisses Furquim
 Hagen Fürstenau
+Hallvard B Furuseth
 Achim Gaedke
 Martin von Gagern
 Lele Gaifax
@@ -354,6 +361,7 @@ Michiel de Hoon
 Brian Hooper
 Randall Hopper
 Nadav Horesh
+Jan Hosang
 Ken Howard
 Brad Howes
 Chih-Hao Huang
@@ -404,13 +412,16 @@ Jacob Kaplan-Moss
 Lou Kates
 Hiroaki Kawai
 Sebastien Keim
+Ryan Kelly
 Robert Kern
 Randall Kern
 Magnus Kessler
 Lawrence Kesteloot
 Vivek Khera
+Akira Kitada
 Mads Kiilerich
 Taek Joo Kim
+W. Trevor King
 Paul Kippes
 Steve Kirsch
 Sebastian Kirsche
@@ -431,10 +442,12 @@ Holger Krekel
 Michael Kremer
 Fabian Kreutz
 Hannu Krosing
+Andrej Krpic
 Ivan Krstić
 Andrew Kuchling
 Vladimir Kushnir
 Cameron Laird
+Łukasz Langa
 Tino Lange
 Andrew Langmead
 Detlef Lannert
@@ -464,7 +477,7 @@ Ross Light
 Shawn Ligocki
 Martin Ligr
 Christopher Lindblad
-Bjorn Lindqvist
+Björn Lindqvist
 Per Lindqvist
 Eric Lindvall
 Gregor Lingl
@@ -521,6 +534,7 @@ Trent Mick
 Aristotelis Mikropoulos
 Damien Miller
 Chad Miller
+Jason V. Miller
 Jay T. Miller
 Roman Milner
 Andrii V. Mishkovskyi
@@ -571,6 +585,7 @@ Grant Olson
 Piet van Oostrum
 Jason Orendorff
 Douglas Orr
+Michele Orrù
 Denis S. Otkidach
 Michael Otteneder
 R. M. Oudkerk
@@ -672,6 +687,7 @@ Jeff Rush
 Sam Rushing
 Mark Russell
 Nick Russo
+Sébastien Sablé
 Hajime Saitou
 George Sakkis
 Rich Salz
@@ -705,6 +721,7 @@ Ian Seyer
 Ha Shao
 Richard Shapiro
 Bruce Sherwood
+Alexander Shigin
 Pete Shinners
 Michael Shiplett
 John W. Shipman
@@ -742,6 +759,7 @@ Peter Stoehr
 Casper Stoel
 Michael Stone
 Ken Stox
+Patrick Strawderman
 Dan Stromberg
 Daniel Stutzbach
 Nathan Sullivan
@@ -778,6 +796,7 @@ John Tromp
 Jason Trowbridge
 Anthony Tuininga
 Stephen Turner
+Theodore Turocy
 Bill Tutt
 Doobee R. Tzeck
 Eren Türkay
@@ -826,6 +845,7 @@ Felix Wiemann
 Gerry Wiener
 Frank Wierzbicki
 Bryce "Zooko" Wilcox-O'Hearn
+Jason Williams
 John Williams
 Sue Williams
 Gerald S. Williams
@@ -850,6 +870,7 @@ Thomas Wouters
 Heiko Wundram
 Doug Wyatt
 Florent Xicluna
+Hirokazu Yamamoto
 Ka-Ping Yee
 Bob Yodlowski
 Danny Yoo
@@ -864,4 +885,3 @@ Siebren van der Zee
 Uwe Zessin
 Tarek Ziadé
 Peter Åstrand
-Andrej Krpic

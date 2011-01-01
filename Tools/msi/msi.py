@@ -1,7 +1,7 @@
 # Python MSI Generator
 # (C) 2003 Martin v. Loewis
 # See "FOO" in comments refers to MSDN sections with the title FOO.
-import msilib, schema, sequence, os, glob, time, re, shutil
+import msilib, schema, sequence, os, glob, time, re, shutil, zipfile
 from msilib import Feature, CAB, Directory, Dialog, Binary, add_data
 import uisample
 from win32com.client import constants
@@ -31,6 +31,8 @@ PCBUILD="PCbuild"
 MSVCR = "90"
 # Name of certificate in default store to sign MSI with
 certname = None
+# Make a zip file containing the PDB files for this build?
+pdbzip = True
 
 try:
     from config import *
@@ -1026,6 +1028,8 @@ def add_files(db):
             lib.glob("*.pem")
             lib.glob("*.pck")
             lib.add_file("zipdir.zip")
+        if dir=='tests' and parent.physical=='distutils':
+            lib.add_file("Setup.sample")
         if dir=='decimaltestdata':
             lib.glob("*.decTest")
         if dir=='xmltestdata':
@@ -1317,6 +1321,16 @@ def add_registry(db):
               ])
     db.Commit()
 
+def build_pdbzip():
+    pdbexclude = ['kill_python.pdb', 'make_buildinfo.pdb',
+                  'make_versioninfo.pdb']
+    path = "python-%s%s-pdb.zip" % (full_current_version, msilib.arch_ext)
+    pdbzip = zipfile.ZipFile(path, 'w')
+    for f in glob.glob1(os.path.join(srcdir, PCBUILD), "*.pdb"):
+        if f not in pdbexclude and not f.endswith('_d.pdb'):
+            pdbzip.write(os.path.join(srcdir, PCBUILD, f), f)
+    pdbzip.close()
+
 db,msiname = build_database()
 try:
     add_features(db)
@@ -1399,3 +1413,6 @@ merge(msiname, "SharedCRT", "TARGETDIR", modules)
 # the certificate subject, e.g. "Python Software Foundation"
 if certname:
     os.system('signtool sign /n "%s" /t http://timestamp.verisign.com/scripts/timestamp.dll %s' % (certname, msiname))
+
+if pdbzip:
+    build_pdbzip()

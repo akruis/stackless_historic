@@ -17,6 +17,11 @@ template strings or the ``%`` operator described in the
 :ref:`string-formatting` section. Also, see the :mod:`re` module for
 string functions based on regular expressions.
 
+.. seealso::
+
+   Latest version of the `string module Python source code
+   <http://svn.python.org/view/python/branches/release27-maint/Lib/string.py?view=markup>`_
+
 
 String constants
 ----------------
@@ -141,7 +146,7 @@ string formatting behaviors using the same implementation as the built-in
 
       Loop over the format_string and return an iterable of tuples
       (*literal_text*, *field_name*, *format_spec*, *conversion*).  This is used
-      by :meth:`vformat` to break the string in to either literal text, or
+      by :meth:`vformat` to break the string into either literal text, or
       replacement fields.
 
       The values in the tuple conceptually represent a span of literal text
@@ -190,7 +195,7 @@ string formatting behaviors using the same implementation as the built-in
       the format string (integers for positional arguments, and strings for
       named arguments), and a reference to the *args* and *kwargs* that was
       passed to vformat.  The set of unused args can be calculated from these
-      parameters.  :meth:`check_unused_args` is assumed to throw an exception if
+      parameters.  :meth:`check_unused_args` is assumed to raise an exception if
       the check fails.
 
    .. method:: format_field(value, format_spec)
@@ -324,11 +329,11 @@ The general form of a *standard format specifier* is:
    precision: `integer`
    type: "b" | "c" | "d" | "e" | "E" | "f" | "F" | "g" | "G" | "n" | "o" | "s" | "x" | "X" | "%"
 
-The *fill* character can be any character other than '}' (which signifies the
-end of the field).  The presence of a fill character is signaled by the *next*
-character, which must be one of the alignment options. If the second character
-of *format_spec* is not a valid alignment option, then it is assumed that both
-the fill character and the alignment option are absent.
+The *fill* character can be any character other than '{' or '}'.  The presence
+of a fill character is signaled by the character following it, which must be
+one of the alignment options.  If the second character of *format_spec* is not
+a valid alignment option, then it is assumed that both the fill character and
+the alignment option are absent.
 
 The meaning of the various alignment options is as follows:
 
@@ -472,7 +477,7 @@ The available presentation types for floating point and decimal values are:
    |         | from the significand, and the decimal point is also      |
    |         | removed if there are no remaining digits following it.   |
    |         |                                                          |
-   |         | Postive and negative infinity, positive and negative     |
+   |         | Positive and negative infinity, positive and negative    |
    |         | zero, and nans, are formatted as ``inf``, ``-inf``,      |
    |         | ``0``, ``-0`` and ``nan`` respectively, regardless of    |
    |         | the precision.                                           |

@@ -1,4 +1,3 @@
-# -*- coding: iso-8859-1 -*-
 """ Test script for the Unicode implementation.
 
 Written by Marc-Andre Lemburg (mal@lemburg.com).
@@ -33,6 +32,16 @@ class UnicodeTest(
     string_tests.MixinStrUnicodeTest,
     ):
     type2test = unicode
+
+    def assertEqual(self, first, second, msg=None):
+        # strict assertEqual method: reject implicit bytes/unicode equality
+        super(UnicodeTest, self).assertEqual(first, second, msg)
+        if isinstance(first, unicode) or isinstance(second, unicode):
+            self.assertIsInstance(first, unicode)
+            self.assertIsInstance(second, unicode)
+        elif isinstance(first, str) or isinstance(second, str):
+            self.assertIsInstance(first, str)
+            self.assertIsInstance(second, str)
 
     def checkequalnofix(self, result, object, methodname, *args):
         method = getattr(object, methodname)
@@ -197,9 +206,9 @@ class UnicodeTest(
 
     def test_comparison(self):
         # Comparisons:
-        self.assertEqual(u'abc', 'abc')
-        self.assertEqual('abc', u'abc')
-        self.assertEqual(u'abc', u'abc')
+        self.assertTrue(u'abc' == 'abc')
+        self.assertTrue('abc' == u'abc')
+        self.assertTrue(u'abc' == u'abc')
         self.assertTrue(u'abcd' > 'abc')
         self.assertTrue('abcd' > u'abc')
         self.assertTrue(u'abcd' > u'abc')
@@ -394,11 +403,14 @@ class UnicodeTest(
 
         self.assertEqual(u'%c' % 0x1234, u'\u1234')
         self.assertRaises(OverflowError, u"%c".__mod__, (sys.maxunicode+1,))
+        self.assertRaises(ValueError, u"%.1\u1032f".__mod__, (1.0/3))
 
         for num in range(0x00,0x80):
             char = chr(num)
-            self.assertEqual(u"%c" % char, char)
-            self.assertEqual(u"%c" % num, char)
+            self.assertEqual(u"%c" % char, unicode(char))
+            self.assertEqual(u"%c" % num, unicode(char))
+            self.assertTrue(char == u"%c" % char)
+            self.assertTrue(char == u"%c" % num)
         # Issue 7649
         for num in range(0x80,0x100):
             uchar = unichr(num)
@@ -557,9 +569,11 @@ class UnicodeTest(
         set_o = '!"#$%&*;<=>@[]^_`{|}'
         for c in set_d:
             self.assertEqual(c.encode('utf7'), c.encode('ascii'))
-            self.assertEqual(c.encode('ascii').decode('utf7'), c)
+            self.assertEqual(c.encode('ascii').decode('utf7'), unicode(c))
+            self.assertTrue(c == c.encode('ascii').decode('utf7'))
         for c in set_o:
-            self.assertEqual(c.encode('ascii').decode('utf7'), c)
+            self.assertEqual(c.encode('ascii').decode('utf7'), unicode(c))
+            self.assertTrue(c == c.encode('ascii').decode('utf7'))
 
     def test_codecs_utf8(self):
         self.assertEqual(u''.encode('utf-8'), '')
@@ -592,9 +606,9 @@ class UnicodeTest(
         )
 
         # UTF-8 specific decoding tests
-        self.assertEqual(unicode('\xf0\xa3\x91\x96', 'utf-8'), u'\U00023456' )
-        self.assertEqual(unicode('\xf0\x90\x80\x82', 'utf-8'), u'\U00010002' )
-        self.assertEqual(unicode('\xe2\x82\xac', 'utf-8'), u'\u20ac' )
+        self.assertEqual(unicode('\xf0\xa3\x91\x96', 'utf-8'), u'\U00023456')
+        self.assertEqual(unicode('\xf0\x90\x80\x82', 'utf-8'), u'\U00010002')
+        self.assertEqual(unicode('\xe2\x82\xac', 'utf-8'), u'\u20ac')
 
         # Other possible utf-8 test cases:
         # * strict decoding testing for all of the
@@ -1208,7 +1222,7 @@ class UnicodeTest(
         # format specifiers for user defined type
         self.assertEqual(u'{0:abc}'.format(C()), u'abc')
 
-        # !r and !s coersions
+        # !r and !s coercions
         self.assertEqual(u'{0!s}'.format(u'Hello'), u'Hello')
         self.assertEqual(u'{0!s:}'.format(u'Hello'), u'Hello')
         self.assertEqual(u'{0!s:15}'.format(u'Hello'), u'Hello          ')
@@ -1222,11 +1236,14 @@ class UnicodeTest(
         self.assertEqual(u'{0}'.format([]), u'[]')
         self.assertEqual(u'{0}'.format([1]), u'[1]')
         self.assertEqual(u'{0}'.format(E(u'data')), u'E(data)')
-        self.assertEqual(u'{0:^10}'.format(E(u'data')), u' E(data)  ')
-        self.assertEqual(u'{0:^10s}'.format(E(u'data')), u' E(data)  ')
         self.assertEqual(u'{0:d}'.format(G(u'data')), u'G(data)')
-        self.assertEqual(u'{0:>15s}'.format(G(u'data')), u' string is data')
         self.assertEqual(u'{0!s}'.format(G(u'data')), u'string is data')
+
+        msg = 'object.__format__ with a non-empty format string is deprecated'
+        with test_support.check_warnings((msg, PendingDeprecationWarning)):
+            self.assertEqual(u'{0:^10}'.format(E(u'data')), u' E(data)  ')
+            self.assertEqual(u'{0:^10s}'.format(E(u'data')), u' E(data)  ')
+            self.assertEqual(u'{0:>15s}'.format(G(u'data')), u' string is data')
 
         self.assertEqual(u"{0:date: %Y-%m-%d}".format(I(year=2007,
                                                         month=8,
@@ -1359,8 +1376,8 @@ class UnicodeTest(
             def __unicode__(self):
                 return u'__unicode__ overridden'
         u = U(u'xxx')
-        self.assertEquals("%s" % u, u'__unicode__ overridden')
-        self.assertEquals("{}".format(u), u'__unicode__ overridden')
+        self.assertEqual("%s" % u, u'__unicode__ overridden')
+        self.assertEqual("{}".format(u), '__unicode__ overridden')
 
 
 def test_main():

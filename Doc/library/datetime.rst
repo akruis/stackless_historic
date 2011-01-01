@@ -235,6 +235,14 @@ Supported operations:
 | ``abs(t)``                     | equivalent to +\ *t* when ``t.days >= 0``, and|
 |                                | to -*t* when ``t.days < 0``. (2)              |
 +--------------------------------+-----------------------------------------------+
+| ``str(t)``                     | Returns a string in the form                  |
+|                                | ``[D day[s], ][H]H:MM:SS[.UUUUUU]``, where D  |
+|                                | is negative for negative ``t``. (5)           |
++--------------------------------+-----------------------------------------------+
+| ``repr(t)``                    | Returns a string in the form                  |
+|                                | ``datetime.timedelta(D[, S[, U]])``, where D  |
+|                                | is negative for negative ``t``. (5)           |
++--------------------------------+-----------------------------------------------+
 
 Notes:
 
@@ -249,6 +257,16 @@ Notes:
 
 (4)
    -*timedelta.max* is not representable as a :class:`timedelta` object.
+
+(5)
+  String representations of :class:`timedelta` objects are normalized
+  similarly to their internal representation.  This leads to somewhat
+  unusual results for negative timedeltas.  For example:
+
+  >>> timedelta(hours=-5)
+  datetime.timedelta(-1, 68400)
+  >>> print(_)
+  -1 day, 19:00:00
 
 In addition to the operations listed above :class:`timedelta` objects support
 certain additions and subtractions with :class:`date` and :class:`datetime`
@@ -926,7 +944,7 @@ Instance methods:
    d.toordinal() - date(d.year, 1, 1).toordinal() + 1`` is the day number within
    the current year starting with ``1`` for January 1st. The :attr:`tm_isdst` flag
    of the result is set according to the :meth:`dst` method: :attr:`tzinfo` is
-   ``None`` or :meth:`dst`` returns ``None``, :attr:`tm_isdst` is set to ``-1``;
+   ``None`` or :meth:`dst` returns ``None``, :attr:`tm_isdst` is set to ``-1``;
    else if :meth:`dst` returns a non-zero value, :attr:`tm_isdst` is set to ``1``;
    else :attr:`tm_isdst` is set to ``0``.
 

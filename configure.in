@@ -497,7 +497,7 @@ AC_ARG_WITH(gcc,
 		without_gcc=$withval;;
 	esac], [
 	case $ac_sys_system in
-	AIX*)   CC=cc_r
+	AIX*)   CC=${CC:-xlc_r}
 		without_gcc=;;
 	BeOS*)
 		case $BE_HOST_CPU in
@@ -840,6 +840,10 @@ if test $enable_shared = "yes"; then
     	LDLIBRARY='libpython$(VERSION).dylib'
 	BLDLIBRARY='-L. -lpython$(VERSION)'
 	RUNSHARED='DYLD_LIBRARY_PATH=`pwd`:${DYLD_LIBRARY_PATH}'
+	;;
+    AIX*)
+	LDLIBRARY='libpython$(VERSION).so'
+	RUNSHARED=LIBPATH=`pwd`:${LIBPATH}
 	;;
 
   esac
@@ -1535,6 +1539,9 @@ AC_CHECK_TYPES(uintptr_t,
    [AC_CHECK_SIZEOF(uintptr_t, 4)], 
    [], [#ifdef HAVE_STDINT_H
         #include <stdint.h>
+        #endif
+        #ifdef HAVE_INTTYPES_H
+        #include <inttypes.h>
         #endif])
 
 AC_CHECK_SIZEOF(off_t, [], [
@@ -1776,7 +1783,7 @@ if test -z "$LDSHARED"
 then
 	case $ac_sys_system/$ac_sys_release in
 	AIX*)
-		BLDSHARED="\$(srcdir)/Modules/ld_so_aix \$(CC) -bI:Modules/python.exp"
+		BLDSHARED="\$(srcdir)/Modules/ld_so_aix \$(CC) -bI:Modules/python.exp -L\$(srcdir)"
 		LDSHARED="\$(BINLIBDEST)/config/ld_so_aix \$(CC) -bI:\$(BINLIBDEST)/config/python.exp"
 		;;
 	BeOS*)
@@ -2099,14 +2106,18 @@ AC_PATH_TOOL([PKG_CONFIG], [pkg-config])
 # Check for use of the system expat library
 AC_MSG_CHECKING(for --with-system-expat)
 AC_ARG_WITH(system_expat,
-            AS_HELP_STRING([--with-system-expat], [build pyexpat module using an installed expat library]))
+            AS_HELP_STRING([--with-system-expat], [build pyexpat module using an installed expat library]),
+            [],
+            [with_system_expat="no"])
 
 AC_MSG_RESULT($with_system_expat)
 
 # Check for use of the system libffi library
 AC_MSG_CHECKING(for --with-system-ffi)
 AC_ARG_WITH(system_ffi,
-            AS_HELP_STRING([--with-system-ffi], [build _ctypes module using an installed ffi library]))
+            AS_HELP_STRING([--with-system-ffi], [build _ctypes module using an installed ffi library]),
+            [],
+            [with_system_ffi="no"])
 
 if test "$with_system_ffi" = "yes" && test -n "$PKG_CONFIG"; then
     LIBFFI_INCLUDEDIR="`"$PKG_CONFIG" libffi --cflags-only-I 2>/dev/null | sed -e 's/^-I//;s/ *$//'`"
@@ -2362,6 +2373,9 @@ if test "$posix_threads" = "yes"; then
       AIX/5) AC_DEFINE(HAVE_BROKEN_POSIX_SEMAPHORES, 1,
 		       [Define if the Posix semaphores do not work on your system])
 		       ;;
+      AIX/6) AC_DEFINE(HAVE_BROKEN_POSIX_SEMAPHORES, 1,
+                      Define if the Posix semaphores do not work on your system)
+                      ;;
       esac
 
       AC_MSG_CHECKING(if PTHREAD_SCOPE_SYSTEM is supported)
@@ -2790,14 +2804,24 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
   [AC_MSG_RESULT(no)
 ])
 
-AC_MSG_CHECKING(for flock)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <sys/file.h>
-]], [[void* p = flock]])],
-  [AC_DEFINE(HAVE_FLOCK, 1, Define if you have the 'flock' function.)
-   AC_MSG_RESULT(yes)],
-  [AC_MSG_RESULT(no)
+AC_CACHE_CHECK([for flock declaration], [ac_cv_flock_decl],
+  [AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM(
+      [#include <sys/file.h>],
+      [void* p = flock]
+    )],
+    [ac_cv_flock_decl=yes],
+    [ac_cv_flock_decl=no]
+  )
 ])
+if test "x${ac_cv_flock_decl}" = xyes; then
+  AC_CHECK_FUNCS(flock,,
+    AC_CHECK_LIB(bsd,flock,
+      [AC_DEFINE(HAVE_FLOCK)
+       AC_DEFINE(FLOCK_NEEDS_LIBBSD, 1, Define if flock needs to be linked with bsd library.)
+    ])
+  )
+fi
 
 AC_MSG_CHECKING(for getpagesize)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -3104,6 +3128,8 @@ int main()
 [ac_cv_buggy_getaddrinfo=yes]))
 fi
 
+AC_MSG_RESULT($ac_cv_buggy_getaddrinfo)
+
 if test $have_getaddrinfo = no -o "$ac_cv_buggy_getaddrinfo" = yes
 then
 	if test $ipv6 = yes
@@ -3115,6 +3141,7 @@ then
 else
 	AC_DEFINE(HAVE_GETADDRINFO, 1, [Define if you have the getaddrinfo function.])
 fi
+
 AC_CHECK_FUNCS(getnameinfo)
 
 # checks for structures
@@ -4260,6 +4287,12 @@ AC_CHECK_TYPE(socklen_t,,
 #endif
 ])
 
+case $ac_sys_system in
+AIX*)
+  AC_DEFINE(HAVE_BROKEN_PIPE_BUF, 1, [Define if the system reports an invalid PIPE_BUF value.]) ;;
+esac
+
+
 AC_SUBST(THREADHEADERS)
 
 for h in `(cd $srcdir;echo Python/thread_*.h)`
@@ -4286,6 +4319,7 @@ AC_MSG_RESULT(done)
 
 # generate output files
 AC_CONFIG_FILES(Makefile.pre Modules/Setup.config Misc/python.pc)
+AC_CONFIG_FILES([Modules/ld_so_aix], [chmod +x Modules/ld_so_aix])
 AC_OUTPUT
 
 echo "creating Modules/Setup"

@@ -6,11 +6,22 @@
    :synopsis: Disassembler for Python bytecode.
 
 
-The :mod:`dis` module supports the analysis of Python :term:`bytecode` by disassembling
-it.  Since there is no Python assembler, this module defines the Python assembly
-language.  The Python bytecode which this module takes as an input is defined
-in the file  :file:`Include/opcode.h` and used by the compiler and the
-interpreter.
+The :mod:`dis` module supports the analysis of CPython :term:`bytecode` by
+disassembling it. The CPython bytecode which this module takes as an
+input is defined in the file :file:`Include/opcode.h` and used by the compiler
+and the interpreter.
+
+.. seealso::
+
+   Latest version of the `dis module Python source code
+   <http://svn.python.org/view/python/branches/release27-maint/Lib/dis.py?view=markup>`_
+
+.. impl-detail::
+
+   Bytecode is an implementation detail of the CPython interpreter!  No
+   guarantees are made that bytecode will not be added, removed, or changed
+   between versions of Python.  Use of this module should not be considered to
+   work across Python VMs or Python releases.
 
 Example: Given the function :func:`myfunc`::
 
@@ -88,7 +99,7 @@ The :mod:`dis` module defines the following functions and constants:
 
 .. data:: opmap
 
-   Dictionary mapping bytecodes to operation names.
+   Dictionary mapping operation names to bytecodes.
 
 
 .. data:: cmp_op

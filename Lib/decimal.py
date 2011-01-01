@@ -1990,12 +1990,14 @@ class Decimal(object):
         # case where xc == 1: result is 10**(xe*y), with xe*y
         # required to be an integer
         if xc == 1:
-            if ye >= 0:
-                exponent = xe*yc*10**ye
-            else:
-                exponent, remainder = divmod(xe*yc, 10**-ye)
-                if remainder:
-                    return None
+            xe *= yc
+            # result is now 10**(xe * 10**ye);  xe * 10**ye must be integral
+            while xe % 10 == 0:
+                xe //= 10
+                ye += 1
+            if ye < 0:
+                return None
+            exponent = xe * 10**ye
             if y.sign == 1:
                 exponent = -exponent
             # if other is a nonnegative integer, use ideal exponent
@@ -2268,9 +2270,10 @@ class Decimal(object):
         # try for an exact result with precision +1
         if ans is None:
             ans = self._power_exact(other, context.prec + 1)
-            if ans is not None and result_sign == 1:
-                ans = _dec_from_triple(1, ans._int, ans._exp)
-            exact = True
+            if ans is not None:
+                if result_sign == 1:
+                    ans = _dec_from_triple(1, ans._int, ans._exp)
+                exact = True
 
         # usual case: inexact result, x**y computed directly as exp(y*log(x))
         if ans is None:
@@ -3753,22 +3756,38 @@ class Context(object):
                  Emin=None, Emax=None,
                  capitals=None, _clamp=0,
                  _ignored_flags=None):
-        if flags is None:
-            flags = []
+        # Set defaults; for everything except flags and _ignored_flags,
+        # inherit from DefaultContext.
+        try:
+            dc = DefaultContext
+        except NameError:
+            pass
+
+        self.prec = prec if prec is not None else dc.prec
+        self.rounding = rounding if rounding is not None else dc.rounding
+        self.Emin = Emin if Emin is not None else dc.Emin
+        self.Emax = Emax if Emax is not None else dc.Emax
+        self.capitals = capitals if capitals is not None else dc.capitals
+        self._clamp = _clamp if _clamp is not None else dc._clamp
+
         if _ignored_flags is None:
-            _ignored_flags = []
-        if not isinstance(flags, dict):
-            flags = dict([(s, int(s in flags)) for s in _signals])
-            del s
-        if traps is not None and not isinstance(traps, dict):
-            traps = dict([(s, int(s in traps)) for s in _signals])
-            del s
-        for name, val in locals().items():
-            if val is None:
-                setattr(self, name, _copy.copy(getattr(DefaultContext, name)))
-            else:
-                setattr(self, name, val)
-        del self.self
+            self._ignored_flags = []
+        else:
+            self._ignored_flags = _ignored_flags
+
+        if traps is None:
+            self.traps = dc.traps.copy()
+        elif not isinstance(traps, dict):
+            self.traps = dict((s, int(s in traps)) for s in _signals)
+        else:
+            self.traps = traps
+
+        if flags is None:
+            self.flags = dict.fromkeys(_signals, 0)
+        elif not isinstance(flags, dict):
+            self.flags = dict((s, int(s in flags)) for s in _signals)
+        else:
+            self.flags = flags
 
     def __repr__(self):
         """Show the current context."""

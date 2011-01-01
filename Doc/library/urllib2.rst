@@ -18,6 +18,7 @@ The :mod:`urllib2` module defines functions and classes which help in opening
 URLs (mostly HTTP) in a complex world --- basic and digest authentication,
 redirections, cookies and more.
 
+
 The :mod:`urllib2` module defines the following functions:
 
 
@@ -25,18 +26,22 @@ The :mod:`urllib2` module defines the following functions:
 
    Open the URL *url*, which can be either a string or a :class:`Request` object.
 
+   .. warning::
+      HTTPS requests do not do any verification of the server's certificate.
+
    *data* may be a string specifying additional data to send to the server, or
    ``None`` if no such data is needed.  Currently HTTP requests are the only ones
    that use *data*; the HTTP request will be a POST instead of a GET when the
    *data* parameter is provided.  *data* should be a buffer in the standard
    :mimetype:`application/x-www-form-urlencoded` format.  The
    :func:`urllib.urlencode` function takes a mapping or sequence of 2-tuples and
-   returns a string in this format.
+   returns a string in this format. urllib2 module sends HTTP/1.1 requests with
+   `Connection:close` header included.
 
    The optional *timeout* parameter specifies a timeout in seconds for blocking
    operations like the connection attempt (if not specified, the global default
-   timeout setting will be used).  This actually only works for HTTP, HTTPS,
-   FTP and FTPS connections.
+   timeout setting will be used).  This actually only works for HTTP, HTTPS and
+   FTP connections.
 
    This function returns a file-like object with two additional methods:
 
@@ -428,7 +433,7 @@ OpenerDirector Objects
    optional *timeout* parameter specifies a timeout in seconds for blocking
    operations like the connection attempt (if not specified, the global default
    timeout setting will be used). The timeout feature actually works only for
-   HTTP, HTTPS, FTP and FTPS connections).
+   HTTP, HTTPS and FTP connections).
 
    .. versionchanged:: 2.6
       *timeout* was added.
@@ -464,7 +469,8 @@ sorting the handler instances.
    named :meth:`unknown_open`.
 
    Note that the implementation of these methods may involve calls of the parent
-   :class:`OpenerDirector` instance's :meth:`.open` and :meth:`.error` methods.
+   :class:`OpenerDirector` instance's :meth:`~OpenerDirector.open` and
+   :meth:`~OpenerDirector.error` methods.
 
 #. Every handler with a method named like :samp:`{protocol}_response` has that
    method called to post-process the response.

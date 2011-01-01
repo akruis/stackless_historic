@@ -248,7 +248,7 @@ With the logger object configured, the following methods create log messages:
   methods listed above, but this is how to log at custom log levels.
 
 :func:`getLogger` returns a reference to a logger instance with the specified
-if it is provided, or ``root`` if not.  The names are period-separated
+name if it is provided, or ``root`` if not.  The names are period-separated
 hierarchical structures.  Multiple calls to :func:`getLogger` with the same name
 will return a reference to the same logger object.  Loggers that are further
 down in the hierarchical list are children of loggers higher up in the list.
@@ -320,6 +320,14 @@ format, the severity of the message, and the contents of the message, in that
 order::
 
     "%(asctime)s - %(levelname)s - %(message)s"
+
+Formatters use a user-configurable function to convert the creation time of a
+record to a tuple. By default, :func:`time.localtime` is used; to change this
+for a particular formatter instance, set the ``converter`` attribute of the
+instance to a function with the same signature as :func:`time.localtime` or
+:func:`time.gmtime`. To change it for all formatters, for example if you want
+all logging times to be shown in GMT, set the ``converter`` attribute in the
+Formatter class (to ``time.gmtime`` for GMT display).
 
 
 Configuring Logging
@@ -522,6 +530,14 @@ should have the desired effect. If an organisation produces a number of
 libraries, then the logger name specified can be "orgname.foo" rather than
 just "foo".
 
+**PLEASE NOTE:** It is strongly advised that you *do not add any handlers other
+than* :class:`NullHandler` *to your library's loggers*. This is because the
+configuration of handlers is the prerogative of the application developer who
+uses your library. The application developer knows their target audience and
+what handlers are most appropriate for their application: if you add handlers
+"under the hood", you might well interfere with their ability to carry out
+unit tests and deliver logs which suit their requirements.
+
 .. versionadded:: 2.7
 
 The :class:`NullHandler` class was not present in previous versions, but is now
@@ -584,6 +600,22 @@ level acts as a filter in the same way as a logger's level does. If a handler
 decides to actually dispatch an event, the :meth:`emit` method is used to send
 the message to its destination. Most user-defined subclasses of :class:`Handler`
 will need to override this :meth:`emit`.
+
+.. _custom-levels:
+
+Custom Levels
+^^^^^^^^^^^^^
+
+Defining your own levels is possible, but should not be necessary, as the
+existing levels have been chosen on the basis of practical experience.
+However, if you are convinced that you need custom levels, great care should
+be exercised when doing this, and it is possibly *a very bad idea to define
+custom levels if you are developing a library*. That's because if multiple
+library authors all define their own custom levels, there is a chance that
+the logging output from such multiple libraries used together will be
+difficult for the using developer to control and/or interpret, because a
+given numeric value might mean different things for different libraries.
+
 
 Useful Handlers
 ---------------
@@ -722,7 +754,7 @@ functions.
       d = {'clientip': '192.168.0.1', 'user': 'fbloggs'}
       logging.warning("Protocol problem: %s", "connection reset", extra=d)
 
-   would print something like  ::
+   would print something like::
 
       2006-02-08 22:20:02,165 192.168.0.1 fbloggs  Protocol problem: connection reset
 
@@ -784,6 +816,14 @@ functions.
    Logs a message with level *level* on the root logger. The other arguments are
    interpreted as for :func:`debug`.
 
+   PLEASE NOTE: The above module-level functions which delegate to the root
+   logger should *not* be used in threads, in versions of Python earlier than
+   2.7.1 and 3.2, unless at least one handler has been added to the root
+   logger *before* the threads are started. These convenience functions call
+   :func:`basicConfig` to ensure that at least one handler is available; in
+   earlier versions of Python, this can (under rare circumstances) lead to
+   handlers being added multiple times to the root logger, which can in turn
+   lead to multiple messages for the same event.
 
 .. function:: disable(lvl)
 
@@ -805,6 +845,8 @@ functions.
    registered using this function, levels should be positive integers and they
    should increase in increasing order of severity.
 
+   NOTE: If you are thinking of defining your own levels, please see the section
+   on :ref:`custom-levels`.
 
 .. function:: getLevelName(lvl)
 
@@ -838,6 +880,13 @@ functions.
 
    .. versionchanged:: 2.4
       Formerly, :func:`basicConfig` did not take any keyword arguments.
+
+   PLEASE NOTE: This function should be called from the main thread
+   before other threads are started. In versions of Python prior to
+   2.7.1 and 3.2, if this function is called from multiple threads,
+   it is possible (in rare circumstances) that a handler will be added
+   to the root logger more than once, leading to unexpected results
+   such as messages being duplicated in the log.
 
    The following keyword arguments are supported.
 
@@ -1327,6 +1376,10 @@ level of granularity you want to use in logging an application, it could
 be hard to manage if the number of :class:`Logger` instances becomes
 effectively unbounded.
 
+
+Using LoggerAdapters to impart contextual information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 An easy way in which you can pass contextual information to be output along
 with logging event information is to use the :class:`LoggerAdapter` class.
 This class is designed to look like a :class:`Logger`, so that you can call
@@ -1433,6 +1486,80 @@ When this script is run, the output should look something like this::
 .. versionadded:: 2.6
 
 The :class:`LoggerAdapter` class was not present in previous versions.
+
+.. _filters-contextual:
+
+Using Filters to impart contextual information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can also add contextual information to log output using a user-defined
+:class:`Filter`. ``Filter`` instances are allowed to modify the ``LogRecords``
+passed to them, including adding additional attributes which can then be output
+using a suitable format string, or if needed a custom :class:`Formatter`.
+
+For example in a web application, the request being processed (or at least,
+the interesting parts of it) can be stored in a threadlocal
+(:class:`threading.local`) variable, and then accessed from a ``Filter`` to
+add, say, information from the request - say, the remote IP address and remote
+user's username - to the ``LogRecord``, using the attribute names 'ip' and
+'user' as in the ``LoggerAdapter`` example above. In that case, the same format
+string can be used to get similar output to that shown above. Here's an example
+script::
+
+    import logging
+    from random import choice
+
+    class ContextFilter(logging.Filter):
+        """
+        This is a filter which injects contextual information into the log.
+
+        Rather than use actual contextual information, we just use random
+        data in this demo.
+        """
+
+        USERS = ['jim', 'fred', 'sheila']
+        IPS = ['123.231.231.123', '127.0.0.1', '192.168.0.1']
+
+        def filter(self, record):
+
+            record.ip = choice(ContextFilter.IPS)
+            record.user = choice(ContextFilter.USERS)
+            return True
+
+    if __name__ == "__main__":
+       levels = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL)
+       a1 = logging.LoggerAdapter(logging.getLogger("a.b.c"),
+                                  { "ip" : "123.231.231.123", "user" : "sheila" })
+       logging.basicConfig(level=logging.DEBUG,
+                           format="%(asctime)-15s %(name)-5s %(levelname)-8s IP: %(ip)-15s User: %(user)-8s %(message)s")
+       a1 = logging.getLogger("a.b.c")
+       a2 = logging.getLogger("d.e.f")
+
+       f = ContextFilter()
+       a1.addFilter(f)
+       a2.addFilter(f)
+       a1.debug("A debug message")
+       a1.info("An info message with %s", "some parameters")
+       for x in range(10):
+           lvl = choice(levels)
+           lvlname = logging.getLevelName(lvl)
+           a2.log(lvl, "A message at %s level with %d %s", lvlname, 2, "parameters")
+
+which, when run, produces something like::
+
+    2010-09-06 22:38:15,292 a.b.c DEBUG    IP: 123.231.231.123 User: fred     A debug message
+    2010-09-06 22:38:15,300 a.b.c INFO     IP: 192.168.0.1     User: sheila   An info message with some parameters
+    2010-09-06 22:38:15,300 d.e.f CRITICAL IP: 127.0.0.1       User: sheila   A message at CRITICAL level with 2 parameters
+    2010-09-06 22:38:15,300 d.e.f ERROR    IP: 127.0.0.1       User: jim      A message at ERROR level with 2 parameters
+    2010-09-06 22:38:15,300 d.e.f DEBUG    IP: 127.0.0.1       User: sheila   A message at DEBUG level with 2 parameters
+    2010-09-06 22:38:15,300 d.e.f ERROR    IP: 123.231.231.123 User: fred     A message at ERROR level with 2 parameters
+    2010-09-06 22:38:15,300 d.e.f CRITICAL IP: 192.168.0.1     User: jim      A message at CRITICAL level with 2 parameters
+    2010-09-06 22:38:15,300 d.e.f CRITICAL IP: 127.0.0.1       User: sheila   A message at CRITICAL level with 2 parameters
+    2010-09-06 22:38:15,300 d.e.f DEBUG    IP: 192.168.0.1     User: jim      A message at DEBUG level with 2 parameters
+    2010-09-06 22:38:15,301 d.e.f ERROR    IP: 127.0.0.1       User: sheila   A message at ERROR level with 2 parameters
+    2010-09-06 22:38:15,301 d.e.f DEBUG    IP: 123.231.231.123 User: fred     A message at DEBUG level with 2 parameters
+    2010-09-06 22:38:15,301 d.e.f INFO     IP: 123.231.231.123 User: fred     A message at INFO level with 2 parameters
+
 
 .. _multiple-processes:
 
@@ -1589,6 +1716,13 @@ printed on the console; on the server side, you should see something like::
       69 myapp.area1     INFO     How quickly daft jumping zebras vex.
       69 myapp.area2     WARNING  Jail zesty vixen who grabbed pay from quack.
       69 myapp.area2     ERROR    The five boxing wizards jump quickly.
+
+Note that there are some security issues with pickle in some scenarios. If
+these affect you, you can use an alternative serialization scheme by overriding
+the :meth:`makePickle` method and implementing your alternative there, as
+well as adapting the above script to use your alternative serialization.
+
+.. _arbitrary-object-messages:
 
 Using arbitrary objects as messages
 -----------------------------------
@@ -1830,6 +1964,16 @@ for use by library developers.
    .. method:: emit(record)
 
       This method does nothing.
+
+   .. method:: handle(record)
+
+      This method does nothing.
+
+   .. method:: createLock()
+
+      This method returns `None` for the lock, since there is no
+      underlying I/O to which access needs to be serialized.
+
 
 See :ref:`library-config` for more information on how to use
 :class:`NullHandler`.
@@ -2400,7 +2544,7 @@ supports sending logging messages to a Web server, using either ``GET`` or
 
    .. method:: emit(record)
 
-      Sends the record to the Web server as an URL-encoded dictionary.
+      Sends the record to the Web server as a percent-encoded dictionary.
 
 
 .. _formatter:
@@ -2473,6 +2617,8 @@ Currently, the useful mapping keys in a :class:`LogRecord` are:
 +-------------------------+-----------------------------------------------+
 | ``%(process)d``         | Process ID (if available).                    |
 +-------------------------+-----------------------------------------------+
+| ``%(processName)s``     | Process name (if available).                  |
++-------------------------+-----------------------------------------------+
 | ``%(message)s``         | The logged message, computed as ``msg %       |
 |                         | args``.                                       |
 +-------------------------+-----------------------------------------------+
@@ -2480,15 +2626,17 @@ Currently, the useful mapping keys in a :class:`LogRecord` are:
 .. versionchanged:: 2.5
    *funcName* was added.
 
+.. versionchanged:: 2.6
+   *processName* was added.
+
 
 .. class:: Formatter([fmt[, datefmt]])
 
    Returns a new instance of the :class:`Formatter` class. The instance is
-   initialized with a format string for the message as a whole, as well as a format
-   string for the date/time portion of a message. If no *fmt* is specified,
-   ``'%(message)s'`` is used. If no *datefmt* is specified, the ISO8601 date format
-   is used.
-
+   initialized with a format string for the message as a whole, as well as a
+   format string for the date/time portion of a message. If no *fmt* is
+   specified, ``'%(message)s'`` is used. If no *datefmt* is specified, the
+   ISO8601 date format is used.
 
    .. method:: format(record)
 
@@ -2532,7 +2680,7 @@ Currently, the useful mapping keys in a :class:`LogRecord` are:
 Filter Objects
 --------------
 
-Filters can be used by :class:`Handler`\ s and :class:`Logger`\ s for
+:class:`Filter`\ s can be used by :class:`Handler`\ s and :class:`Logger`\ s for
 more sophisticated filtering than is provided by levels. The base filter class
 only allows events which are below a certain point in the logger hierarchy. For
 example, a filter initialized with "A.B" will allow events logged by loggers
@@ -2544,7 +2692,7 @@ initialized with the empty string, all events are passed.
 
    Returns an instance of the :class:`Filter` class. If *name* is specified, it
    names a logger which, together with its children, will have its events allowed
-   through the filter. If no name is specified, allows every event.
+   through the filter. If *name* is the empty string, allows every event.
 
 
    .. method:: filter(record)
@@ -2553,40 +2701,98 @@ initialized with the empty string, all events are passed.
       yes. If deemed appropriate, the record may be modified in-place by this
       method.
 
+Note that filters attached to handlers are consulted whenever an event is
+emitted by the handler, whereas filters attached to loggers are consulted
+whenever an event is logged to the handler (using :meth:`debug`, :meth:`info`,
+etc.) This means that events which have been generated by descendant loggers
+will not be filtered by a logger's filter setting, unless the filter has also
+been applied to those descendant loggers.
+
+You don't actually need to subclass ``Filter``: you can pass any instance
+which has a ``filter`` method with the same semantics.
+
+Other uses for filters
+^^^^^^^^^^^^^^^^^^^^^^
+
+Although filters are used primarily to filter records based on more
+sophisticated criteria than levels, they get to see every record which is
+processed by the handler or logger they're attached to: this can be useful if
+you want to do things like counting how many records were processed by a
+particular logger or handler, or adding, changing or removing attributes in
+the LogRecord being processed. Obviously changing the LogRecord needs to be
+done with some care, but it does allow the injection of contextual information
+into logs (see :ref:`filters-contextual`).
+
 .. _log-record:
 
 LogRecord Objects
 -----------------
 
-:class:`LogRecord` instances are created every time something is logged. They
-contain all the information pertinent to the event being logged. The main
-information passed in is in msg and args, which are combined using msg % args to
-create the message field of the record. The record also includes information
-such as when the record was created, the source line where the logging call was
-made, and any exception information to be logged.
+:class:`LogRecord` instances are created automatically by the :class:`Logger`
+every time something is logged, and can be created manually via
+:func:`makeLogRecord` (for example, from a pickled event received over the
+wire).
 
 
-.. class:: LogRecord(name, lvl, pathname, lineno, msg, args, exc_info [, func])
+.. class::
+   LogRecord(name, lvl, pathname, lineno, msg, args, exc_info [, func=None])
 
-   Returns an instance of :class:`LogRecord` initialized with interesting
-   information. The *name* is the logger name; *lvl* is the numeric level;
-   *pathname* is the absolute pathname of the source file in which the logging
-   call was made; *lineno* is the line number in that file where the logging
-   call is found; *msg* is the user-supplied message (a format string); *args*
-   is the tuple which, together with *msg*, makes up the user message; and
-   *exc_info* is the exception tuple obtained by calling :func:`sys.exc_info`
-   (or :const:`None`, if no exception information is available). The *func* is
-   the name of the function from which the logging call was made. If not
-   specified, it defaults to ``None``.
+   Contains all the information pertinent to the event being logged.
 
-   .. versionchanged:: 2.5
-      *func* was added.
+   The primary information is passed in :attr:`msg` and :attr:`args`, which
+   are combined using ``msg % args`` to create the :attr:`message` field of the
+   record.
 
+   .. attribute:: args
+
+      Tuple of arguments to be used in formatting :attr:`msg`.
+
+   .. attribute:: exc_info
+
+      Exception tuple (à la `sys.exc_info`) or `None` if no exception
+      information is available.
+
+   .. attribute:: func
+
+      Name of the function of origin (i.e. in which the logging call was made).
+
+   .. attribute:: lineno
+
+      Line number in the source file of origin.
+
+   .. attribute:: lvl
+
+      Numeric logging level.
+
+   .. attribute:: message
+
+      Bound to the result of :meth:`getMessage` when
+      :meth:`Formatter.format(record)<Formatter.format>` is invoked.
+
+   .. attribute:: msg
+
+      User-supplied :ref:`format string<string-formatting>` or arbitrary object
+      (see :ref:`arbitrary-object-messages`) used in :meth:`getMessage`.
+
+   .. attribute:: name
+
+      Name of the logger that emitted the record.
+
+   .. attribute:: pathname
+
+      Absolute pathname of the source file of origin.
 
    .. method:: getMessage()
 
       Returns the message for this :class:`LogRecord` instance after merging any
-      user-supplied arguments with the message.
+      user-supplied arguments with the message. If the user-supplied message
+      argument to the logging call is not a string, :func:`str` is called on it to
+      convert it to a string. This allows use of user-defined classes as
+      messages, whose ``__str__`` method can return the actual format string to
+      be used.
+
+   .. versionchanged:: 2.5
+      *func* was added.
 
 .. _logger-adapter:
 

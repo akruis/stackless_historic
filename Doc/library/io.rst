@@ -11,6 +11,8 @@
 .. moduleauthor:: Benjamin Peterson <benjamin@python.org>
 .. sectionauthor:: Benjamin Peterson <benjamin@python.org>
 
+.. versionadded:: 2.6
+
 The :mod:`io` module provides the Python interfaces to stream handling.
 Under Python 2.x, this is proposed as an alternative to the built-in
 :class:`file` object, but in Python 3.x it is the default interface to
@@ -27,7 +29,7 @@ access files and streams.
 At the top of the I/O hierarchy is the abstract base class :class:`IOBase`.  It
 defines the basic interface to a stream.  Note, however, that there is no
 separation between reading and writing to streams; implementations are allowed
-to throw an :exc:`IOError` if they do not support a given operation.
+to raise an :exc:`IOError` if they do not support a given operation.
 
 Extending :class:`IOBase` is :class:`RawIOBase` which deals simply with the
 reading and writing of raw bytes to a stream.  :class:`FileIO` subclasses
@@ -66,11 +68,11 @@ Module Interface
    Open *file* and return a corresponding stream.  If the file cannot be opened,
    an :exc:`IOError` is raised.
 
-   *file* is either a string giving the name (and the path if the file isn't
-   in the current working directory) of the file to be opened or an integer
-   file descriptor of the file to be wrapped.  (If a file descriptor is given,
-   for example, from :func:`os.fdopen`, it is closed when the returned I/O
-   object is closed, unless *closefd* is set to ``False``.)
+   *file* is either a string giving the pathname (absolute or
+   relative to the current working directory) of the file to be opened or
+   an integer file descriptor of the file to be wrapped.  (If a file descriptor
+   is given, it is closed when the returned I/O object is closed, unless
+   *closefd* is set to ``False``.)
 
    *mode* is an optional string that specifies the mode in which the file is
    opened.  It defaults to ``'r'`` which means open for reading in text mode.
@@ -369,8 +371,9 @@ I/O Base Classes
 
    .. method:: readinto(b)
 
-      Read up to len(b) bytes into bytearray *b* and return the number of bytes
-      read.
+      Read up to len(b) bytes into bytearray *b* and return the number ofbytes
+      read.  If the object is in non-blocking mode and no bytes are available,
+      ``None`` is returned.
 
    .. method:: write(b)
 

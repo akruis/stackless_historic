@@ -33,6 +33,11 @@ following URL schemes: ``file``, ``ftp``, ``gopher``, ``hdl``, ``http``,
 .. versionadded:: 2.5
    Support for the ``sftp`` and ``sips`` schemes.
 
+.. seealso::
+
+   Latest version of the `urlparse module Python source code
+   <http://svn.python.org/view/python/branches/release27-maint/Lib/urlparse.py?view=markup>`_
+
 The :mod:`urlparse` module defines the following functions:
 
 
@@ -57,6 +62,23 @@ The :mod:`urlparse` module defines the following functions:
       80
       >>> o.geturl()
       'http://www.cwi.nl:80/%7Eguido/Python.html'
+
+
+   Following the syntax specifications in :rfc:`1808`, urlparse recognizes
+   a netloc only if it is properly introduced by '//'.  Otherwise the
+   input is presumed to be a relative URL and thus to start with
+   a path component.
+
+       >>> from urlparse import urlparse
+       >>> urlparse('//www.cwi.nl:80/%7Eguido/Python.html')
+       ParseResult(scheme='', netloc='www.cwi.nl:80', path='/%7Eguido/Python.html',
+                  params='', query='', fragment='')
+       >>> urlparse('www.cwi.nl:80/%7Eguido/Python.html')
+       ParseResult(scheme='', netloc='', path='www.cwi.nl:80/%7Eguido/Python.html',
+                  params='', query='', fragment='')
+       >>> urlparse('help/Python.html')
+       ParseResult(scheme='', netloc='', path='help/Python.html', params='',
+                  query='', fragment='')
 
    If the *scheme* argument is specified, it gives the default addressing
    scheme, to be used only if the URL does not specify one.  The default value for
@@ -113,7 +135,7 @@ The :mod:`urlparse` module defines the following functions:
    values are lists of values for each name.
 
    The optional argument *keep_blank_values* is a flag indicating whether blank
-   values in URL encoded queries should be treated as blank strings.   A true value
+   values in percent-encoded queries should be treated as blank strings.   A true value
    indicates that blanks should be retained as  blank strings.  The default false
    value indicates that blank values are to be ignored and treated as if they were
    not included.
@@ -136,7 +158,7 @@ The :mod:`urlparse` module defines the following functions:
    name, value pairs.
 
    The optional argument *keep_blank_values* is a flag indicating whether blank
-   values in URL encoded queries should be treated as blank strings.   A true value
+   values in percent-encoded queries should be treated as blank strings.   A true value
    indicates that blanks should be retained as  blank strings.  The default false
    value indicates that blank values are to be ignored and treated as if they were
    not included.

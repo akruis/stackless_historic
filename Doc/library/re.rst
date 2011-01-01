@@ -224,7 +224,7 @@ The special characters are:
    undefined.
 
 ``(?:...)``
-   A non-grouping version of regular parentheses. Matches whatever regular
+   A non-capturing version of regular parentheses.  Matches whatever regular
    expression is inside the parentheses, but the substring matched by the group
    *cannot* be retrieved after performing a match or referenced later in the
    pattern.
@@ -574,7 +574,7 @@ form.
       >>> re.split("(?m)^$", "foo\n\nbar\n")
       ['foo\n\nbar\n']
 
-   .. versionchanged:: 2.7,3.1
+   .. versionchanged:: 2.7
       Added the optional flags argument.
 
 
@@ -652,7 +652,7 @@ form.
    character ``'0'``.  The backreference ``\g<0>`` substitutes in the entire
    substring matched by the RE.
 
-   .. versionchanged:: 2.7,3.1
+   .. versionchanged:: 2.7
       Added the optional flags argument.
 
 
@@ -661,7 +661,7 @@ form.
    Perform the same operation as :func:`sub`, but return a tuple ``(new_string,
    number_of_subs_made)``.
 
-   .. versionchanged:: 2.7,3.1
+   .. versionchanged:: 2.7
       Added the optional flags argument.
 
 
@@ -670,6 +670,11 @@ form.
    Return *string* with all non-alphanumerics backslashed; this is useful if you
    want to match an arbitrary literal string that may have regular expression
    metacharacters in it.
+
+
+.. function:: purge()
+
+   Clear the regular expression cache.
 
 
 .. exception:: error
@@ -1205,9 +1210,9 @@ in each word of a sentence except for the first and last characters::
    ...   random.shuffle(inner_word)
    ...   return m.group(1) + "".join(inner_word) + m.group(3)
    >>> text = "Professor Abdolmalek, please report your absences promptly."
-   >>> re.sub("(\w)(\w+)(\w)", repl, text)
+   >>> re.sub(r"(\w)(\w+)(\w)", repl, text)
    'Poefsrosr Aealmlobdk, pslaee reorpt your abnseces plmrptoy.'
-   >>> re.sub("(\w)(\w+)(\w)", repl, text)
+   >>> re.sub(r"(\w)(\w+)(\w)", repl, text)
    'Pofsroser Aodlambelk, plasee reoprt yuor asnebces potlmrpy.'
 
 

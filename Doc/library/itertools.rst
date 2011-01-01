@@ -72,7 +72,6 @@ Iterator                                         Arguments                  Resu
 :func:`permutations`                             p[, r]                     r-length tuples, all possible orderings, no repeated elements
 :func:`combinations`                             p, r                       r-length tuples, in sorted order, no repeated elements
 :func:`combinations_with_replacement`            p, r                       r-length tuples, in sorted order, with repeated elements
-|
 ``product('ABCD', repeat=2)``                                               ``AA AB AC AD BA BB BC BD CA CB CC CD DA DB DC DD``
 ``permutations('ABCD', 2)``                                                 ``AB AC AD BA BC BD CA CB CD DA DB DC``
 ``combinations('ABCD', 2)``                                                 ``AB AC AD BC BD CD``
@@ -104,7 +103,7 @@ loops that truncate the stream.
                   yield element
 
 
-.. function:: itertools.chain.from_iterable(iterable)
+.. classmethod:: chain.from_iterable(iterable)
 
    Alternate constructor for :func:`chain`.  Gets chained inputs from a
    single iterable argument that is evaluated lazily.  Equivalent to::
@@ -677,7 +676,7 @@ which incur interpreter overhead.
            # feed the entire iterator into a zero-length deque
            collections.deque(iterator, maxlen=0)
        else:
-           # advance to the emtpy slice starting at position n
+           # advance to the empty slice starting at position n
            next(islice(iterator, n, n), None)
 
    def nth(iterable, n, default=None):

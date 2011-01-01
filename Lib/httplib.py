@@ -67,6 +67,7 @@ Req-sent-unread-response       _CS_REQ_SENT       <response_class>
 """
 
 from array import array
+import os
 import socket
 from sys import py3kwarning
 from urlparse import urlsplit
@@ -638,6 +639,9 @@ class HTTPResponse:
             amt -= len(chunk)
         return ''.join(s)
 
+    def fileno(self):
+        return self.fp.fileno()
+
     def getheader(self, name, default=None):
         if self.msg is None:
             raise ResponseNotReady()
@@ -748,35 +752,25 @@ class HTTPConnection:
             self.__response = None
         self.__state = _CS_IDLE
 
-    def send(self, str):
-        """Send `str' to the server."""
+    def send(self, data):
+        """Send `data' to the server."""
         if self.sock is None:
             if self.auto_open:
                 self.connect()
             else:
                 raise NotConnected()
 
-        # send the data to the server. if we get a broken pipe, then close
-        # the socket. we want to reconnect when somebody tries to send again.
-        #
-        # NOTE: we DO propagate the error, though, because we cannot simply
-        #       ignore the error... the caller will know if they can retry.
         if self.debuglevel > 0:
-            print "send:", repr(str)
-        try:
-            blocksize=8192
-            if hasattr(str,'read') and not isinstance(str, array):
-                if self.debuglevel > 0: print "sendIng a read()able"
-                data=str.read(blocksize)
-                while data:
-                    self.sock.sendall(data)
-                    data=str.read(blocksize)
-            else:
-                self.sock.sendall(str)
-        except socket.error, v:
-            if v.args[0] == 32:      # Broken pipe
-                self.close()
-            raise
+            print "send:", repr(data)
+        blocksize = 8192
+        if hasattr(data,'read') and not isinstance(data, array):
+            if self.debuglevel > 0: print "sendIng a read()able"
+            datablock = data.read(blocksize)
+            while datablock:
+                self.sock.sendall(datablock)
+                datablock = data.read(blocksize)
+        else:
+            self.sock.sendall(data)
 
     def _output(self, s):
         """Add a line of output to the current request buffer.
@@ -848,9 +842,9 @@ class HTTPConnection:
         self._method = method
         if not url:
             url = '/'
-        str = '%s %s %s' % (method, url, self._http_vsn_str)
+        hdr = '%s %s %s' % (method, url, self._http_vsn_str)
 
-        self._output(str)
+        self._output(hdr)
 
         if self._http_vsn == 11:
             # Issue some standard headers for better HTTP/1.1 compliance
@@ -885,6 +879,9 @@ class HTTPConnection:
                         host_enc = self.host.encode("ascii")
                     except UnicodeEncodeError:
                         host_enc = self.host.encode("idna")
+                    # Wrap the IPv6 Host Header with [] (RFC 2732)
+                    if host_enc.find(':') >= 0:
+                        host_enc = "[" + host_enc + "]"
                     if self.port == self.default_port:
                         self.putheader('Host', host_enc)
                     else:
@@ -921,8 +918,8 @@ class HTTPConnection:
         if self.__state != _CS_REQ_STARTED:
             raise CannotSendHeader()
 
-        str = '%s: %s' % (header, '\r\n\t'.join(values))
-        self._output(str)
+        hdr = '%s: %s' % (header, '\r\n\t'.join([str(v) for v in values]))
+        self._output(hdr)
 
     def endheaders(self, message_body=None):
         """Indicate that the last header line has been sent to the server.
@@ -941,15 +938,7 @@ class HTTPConnection:
 
     def request(self, method, url, body=None, headers={}):
         """Send a complete request to the server."""
-
-        try:
-            self._send_request(method, url, body, headers)
-        except socket.error, v:
-            # trap 'Broken pipe' if we're allowed to automatically reconnect
-            if v.args[0] != 32 or not self.auto_open:
-                raise
-            # try one more time
-            self._send_request(method, url, body, headers)
+        self._send_request(method, url, body, headers)
 
     def _set_content_length(self, body):
         # Set the content-length based on the body.
@@ -959,7 +948,6 @@ class HTTPConnection:
         except TypeError, te:
             # If this is a file-like object, try to
             # fstat its file descriptor
-            import os
             try:
                 thelen = str(os.fstat(body.fileno()).st_size)
             except (AttributeError, OSError):
@@ -970,7 +958,7 @@ class HTTPConnection:
             self.putheader('Content-Length', thelen)
 
     def _send_request(self, method, url, body, headers):
-        # honour explicitly requested Host: and Accept-Encoding headers
+        # Honor explicitly requested Host: and Accept-Encoding: headers.
         header_names = dict.fromkeys([k.lower() for k in headers])
         skips = {}
         if 'host' in header_names:

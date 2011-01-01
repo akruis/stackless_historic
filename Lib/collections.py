@@ -12,6 +12,32 @@ import sys as _sys
 import heapq as _heapq
 from itertools import repeat as _repeat, chain as _chain, starmap as _starmap, \
                       ifilter as _ifilter, imap as _imap
+try:
+    from thread import get_ident
+except ImportError:
+    from dummy_thread import get_ident
+
+def _recursive_repr(user_function):
+    'Decorator to make a repr function return "..." for a recursive call'
+    repr_running = set()
+
+    def wrapper(self):
+        key = id(self), get_ident()
+        if key in repr_running:
+            return '...'
+        repr_running.add(key)
+        try:
+            result = user_function(self)
+        finally:
+            repr_running.discard(key)
+        return result
+
+    # Can't use functools.wraps() here because of bootstrap issues
+    wrapper.__module__ = getattr(user_function, '__module__')
+    wrapper.__doc__ = getattr(user_function, '__doc__')
+    wrapper.__name__ = getattr(user_function, '__name__')
+    return wrapper
+
 
 ################################################################################
 ### OrderedDict
@@ -119,6 +145,18 @@ class OrderedDict(dict, MutableMapping):
     iteritems = MutableMapping.iteritems
     __ne__ = MutableMapping.__ne__
 
+    def viewkeys(self):
+        "od.viewkeys() -> a set-like object providing a view on od's keys"
+        return KeysView(self)
+
+    def viewvalues(self):
+        "od.viewvalues() -> an object providing a view on od's values"
+        return ValuesView(self)
+
+    def viewitems(self):
+        "od.viewitems() -> a set-like object providing a view on od's items"
+        return ItemsView(self)
+
     def popitem(self, last=True):
         '''od.popitem() -> (k, v), return and remove a (key, value) pair.
         Pairs are returned in LIFO order if last is true or FIFO order if false.
@@ -130,6 +168,7 @@ class OrderedDict(dict, MutableMapping):
         value = self.pop(key)
         return key, value
 
+    @_recursive_repr
     def __repr__(self):
         'od.__repr__() <==> repr(od)'
         if not self:
@@ -160,9 +199,6 @@ class OrderedDict(dict, MutableMapping):
             return len(self)==len(other) and \
                    all(_imap(_eq, self.iteritems(), other.iteritems()))
         return dict.__eq__(self, other)
-
-    def __del__(self):
-        self.clear()                # eliminate cyclical references
 
 
 ################################################################################

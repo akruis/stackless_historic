@@ -291,9 +291,10 @@ def _in_document(node):
 
 def _write_data(writer, data):
     "Writes datachars to writer."
-    data = data.replace("&", "&amp;").replace("<", "&lt;")
-    data = data.replace("\"", "&quot;").replace(">", "&gt;")
-    writer.write(data)
+    if data:
+        data = data.replace("&", "&amp;").replace("<", "&lt;"). \
+                    replace("\"", "&quot;").replace(">", "&gt;")
+        writer.write(data)
 
 def _get_elements_by_tagName_helper(parent, name, rc):
     for node in parent.childNodes:
@@ -890,6 +891,10 @@ class Childless:
         raise xml.dom.NotFoundErr(
             self.nodeName + " nodes do not have children")
 
+    def normalize(self):
+        # For childless nodes, normalize() has nothing to do.
+        pass
+
     def replaceChild(self, newChild, oldChild):
         raise xml.dom.HierarchyRequestErr(
             self.nodeName + " nodes do not have children")
@@ -1336,11 +1341,9 @@ class Notation(Identified, Childless, Node):
 class DOMImplementation(DOMImplementationLS):
     _features = [("core", "1.0"),
                  ("core", "2.0"),
-                 ("core", "3.0"),
                  ("core", None),
                  ("xml", "1.0"),
                  ("xml", "2.0"),
-                 ("xml", "3.0"),
                  ("xml", None),
                  ("ls-load", "3.0"),
                  ("ls-load", None),
