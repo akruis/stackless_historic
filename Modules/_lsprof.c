@@ -527,7 +527,9 @@ static void
 SelectStack(ProfilerObject *pObj)
 {
 #ifdef STACKLESS
-    SelectStackByKey(pObj, PyStackless_GetCurrent());
+    PyObject *stack = PyStackless_GetCurrent();
+    SelectStackByKey(pObj, stack);
+    Py_XDECREF(stack);
 #else
     PyThreadState *tstate = PyThreadState_GET();
     SelectStackByKey(pObj, tstate);
