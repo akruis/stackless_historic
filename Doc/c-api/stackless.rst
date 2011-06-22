@@ -14,20 +14,20 @@ Tasklets
   or *NULL*.  *func* must be a callable object (normal use-case) or *NULL*, if the
   tasklet is being used via capture().
 
-  .. todo:: in the case where NULL is returned and slp_ensure_linkage fails no
-  exception is set, which is in contrast elsewhere in the function.
+.. todo: in the case where NULL is returned and slp_ensure_linkage fails no
+   exception is set, which is in contrast elsewhere in the function.
 
 .. cfunction:: int PyTasklet_Setup(PyTaskletObject *task, PyObject *args, PyObject *kwds)
   
   Binds a tasklet function to parameters, making it ready to run and inserts in
   into the runnables queue.  Returns ``0`` if successful or ``-1`` in the case of failure.
 
-..cfunction:: int PyTasklet_Run(PyTaskletObject *task)
+.. cfunction:: int PyTasklet_Run(PyTaskletObject *task)
 
   Forces *task* to run immediately.  Returns ``0`` if successful, and ``-1`` in the
   case of failure.
 
-..cfunction:: int PyTasklet_Run_nr(PyTaskletObject *task)
+.. cfunction:: int PyTasklet_Run_nr(PyTaskletObject *task)
 
   Forces *task* to run immediately, soft switching if possible.  Returns ``1`` if
   the call soft switched, ``0`` if the call hard switched and -1 in the case of
@@ -45,21 +45,21 @@ Tasklets
   Insert *task* into the runnables queue, if it isn't already there.   If it is
   blocked or dead, the function returns ``-1`` and a :exc:`RuntimeError` is raised.
 
-..cfunction:: PyObject *PyTasklet_Become(PyTaskletObject *self, PyObject *retval)
+.. cfunction:: PyObject *PyTasklet_Become(PyTaskletObject *self, PyObject *retval)
 
   Use of this API function is undocumented and unrecommended.
 
   .. deprecated:: 2.5
      Proved problematic in production use and are pending removal.
 
-..cfunction:: PyObject* PyTasklet_Capture(PyTaskletObject *self, PyObject *retval)
+.. cfunction:: PyObject* PyTasklet_Capture(PyTaskletObject *self, PyObject *retval)
 
   Use of this API function is undocumented and unrecommended.
 
   .. deprecated:: 2.5
      Proved problematic in production use and are pending removal.
 
-..cfunction:: int PyTasklet_RaiseException(PyTaskletObject *self, PyObject *klass, PyObject *args)
+.. cfunction:: int PyTasklet_RaiseException(PyTaskletObject *self, PyObject *klass, PyObject *args)
 
   Raises an instance of the *klass* exception on the *self* tasklet.  *klass* must
   be a subclass of :exc:`Exception`.  Returns ``1`` if the call soft switched, ``0``
@@ -151,111 +151,111 @@ Tasklets
 Channels
 --------
 
- ..cfunction:: PyChannelObject* PyChannel_New(PyTypeObject *type)
+ .. cfunction:: PyChannelObject* PyChannel_New(PyTypeObject *type)
 
   Return a new channel object, or *NULL* in the case of failure.  *type* must be
   derived from :ctype:`PyChannel_Type` or be *NULL*, otherwise a :exc:`TypeError`
   is raised.
 
-..cfunction:: int PyChannel_Send(PyChannelObject *self, PyObject *arg)
+.. cfunction:: int PyChannel_Send(PyChannelObject *self, PyObject *arg)
 
   Send *arg* on the channel *self*.  Returns ``0`` if the operation was
   successful, or ``-1`` in the case of failure.
 
-..cfunction:: int PyChannel_Send_nr(PyChannelObject *self, PyObject *arg)
+.. cfunction:: int PyChannel_Send_nr(PyChannelObject *self, PyObject *arg)
 
   Send *arg* on the channel *self*, soft switching if possible.  Returns ``1`` if
   the call soft switched, ``0`` if the call hard switched and -1 in the case of
   failure.
 
-..cfunction:: PyObject *PyChannel_Receive(PyChannelObject *self)
+.. cfunction:: PyObject *PyChannel_Receive(PyChannelObject *self)
 
   Receive on the channel *self*.  Returns a python object if the operation was
   successful, or *NULL* in the case of failure.
 
-..cfunction:: PyObject *PyChannel_Receive_nr(PyChannelObject *self)
+.. cfunction:: PyObject *PyChannel_Receive_nr(PyChannelObject *self)
 
   Receive on the channel *self*, soft switching if possible.  Returns a python
   object if the operation was successful, :ctype:`Py_UnwindToken` if a soft switch
   occurred, or *NULL* in the case of failure.
 
-..cfunction:: int PyChannel_SendException(PyChannelObject *self, PyObject *klass, PyObject *value)
+.. cfunction:: int PyChannel_SendException(PyChannelObject *self, PyObject *klass, PyObject *value)
 
   Returns ``0`` if successful or ``-1`` in the case of failure.  An instance of the
   exception type *klass* is raised on the first tasklet blocked on channel *self*.
 
-..cfunction:: PyObject *PyChannel_GetQueue(PyChannelObject *self)
+.. cfunction:: PyObject *PyChannel_GetQueue(PyChannelObject *self)
 
   Returns the first tasklet in the channel *self*'s queue, or *NULL* in the case
   the queue is empty.
 
-..cfunction:: void PyChannel_Close(PyChannelObject *self)
+.. cfunction:: void PyChannel_Close(PyChannelObject *self)
 
   Marks the channel *self* as closing.  No further tasklets can be blocked on the
   it from this point, unless it is later reopened.
 
-..cfunction:: void PyChannel_Open(PyChannelObject *self)
+.. cfunction:: void PyChannel_Open(PyChannelObject *self)
 
   Reopens the channel *self*.  This allows tasklets to once again send and receive
   on it, if those operations would otherwise block the given tasklet.
 
-..cfunction:: int PyChannel_GetClosing(PyChannelObject *self)
+.. cfunction:: int PyChannel_GetClosing(PyChannelObject *self)
 
   Returns ``1`` if the channel *self* is marked as closing, otherwise ``0``.
 
-..cfunction:: int PyChannel_GetClosed(PyChannelObject *self)
+.. cfunction:: int PyChannel_GetClosed(PyChannelObject *self)
 
   Returns ``1`` if the channel *self* is marked as closing and there are no tasklets
   blocked on it, otherwise ``0``.
 
-..cfunction:: int PyChannel_GetPreference(PyChannelObject *self)
+.. cfunction:: int PyChannel_GetPreference(PyChannelObject *self)
 
   Returns the current scheduling preference value of *self*.  See
   :attr:`channel.preference`.
 
-..cfunction:: void PyChannel_SetPreference(PyChannelObject *self, int val)
+.. cfunction:: void PyChannel_SetPreference(PyChannelObject *self, int val)
 
   Sets the current scheduling preference value of *self*.  See
   :attr:`channel.preference`.
 
-..cfunction:: int PyChannel_GetScheduleAll(PyChannelObject *self)
+.. cfunction:: int PyChannel_GetScheduleAll(PyChannelObject *self)
 
   Gets the *schedule_all* override flag for *self*.  See
   :attr:`channel.schedule_all`.
 
-..cfunction:: void PyChannel_SetScheduleAll(PyChannelObject *self, int val)
+.. cfunction:: void PyChannel_SetScheduleAll(PyChannelObject *self, int val)
 
   Sets the *schedule_all* override flag for *self*.  See
   :attr:`channel.schedule_all`.
 
-..cfunction:: int PyChannel_GetBalance(PyChannelObject *self)
+.. cfunction:: int PyChannel_GetBalance(PyChannelObject *self)
 
   Gets the balance for *self*.  See :attr:`channel.balance`.
 
 stackless module
 ----------------
 
-..cfunction:: PyObject *PyStackless_Schedule(PyObject *retval, int remove)
+.. cfunction:: PyObject *PyStackless_Schedule(PyObject *retval, int remove)
 
   Suspend the current tasklet and schedule the next one in the cyclic chain.
   if remove is nonzero, the current tasklet will be removed from the chain.
   retval = success  NULL = failure
 
-..cfunction:: PyObject *PyStackless_Schedule_nr(PyObject *retval, int remove)
+.. cfunction:: PyObject *PyStackless_Schedule_nr(PyObject *retval, int remove)
 
   retval = success  NULL = failure
   retval == Py_UnwindToken: soft switched
 
- ..cfunction:: int PyStackless_GetRunCount()
+ .. cfunction:: int PyStackless_GetRunCount()
 
   get the number of runnable tasks, including the current one.
   -1 = failure
 
-..cfunction:: PyObject *PyStackless_GetCurrent()
+.. cfunction:: PyObject *PyStackless_GetCurrent()
 
   Get the currently running tasklet, that is, "yourself".
 
-..cfunction:: PyObject *PyStackless_RunWatchdog(long timeout)
+.. cfunction:: PyObject *PyStackless_RunWatchdog(long timeout)
 
   Runs the scheduler until there are no tasklets remaining within it, or until
   one of the scheduled tasklets runs for *timeout* VM instructions without
@@ -269,36 +269,37 @@ stackless module
   here, since every uncaught exception will be directed
   to main.
 
-..cfunction:: PyObject *PyStackless_RunWatchdogEx(long timeout, int flags)
+.. cfunction:: PyObject *PyStackless_RunWatchdogEx(long timeout, int flags)
 
   Wraps :cfunc:`PyStackless_RunWatchdog`, but allows its behaviour to be
   customised by the value of *flags* which may contain any of the following
   bits:
   
-  Py_WATCHDOG_THREADBLOCK:
-  When set enables the old thread-blocking behaviour when
-  we run out of tasklets on this thread and there are other
-  Python threads running.
+  ``Py_WATCHDOG_THREADBLOCK``
+     Allows a thread to block if it runs out of tasklets.  Ideally
+     it will be awakened by other threads using channels which its
+     blocked tasklets are waiting on.
   
-  Py_WATCHDOG_SOFT:
-  Instead of interrupting a tasklet, we wait until the
-  next tasklet scheduling moment to return.  Always returns
-  Py_None, as everything is in order.
+  ``Py_WATCHDOG_SOFT``
+     Instead of interrupting a tasklet, we wait until the
+     next tasklet scheduling moment to return.  Always returns
+     *Py_None*, as everything is in order.
   
-  Py_WATCHDOG_IGNORE_NESTING:
-  allows interrupts at all levels, effectively acting as
-  though the "ignore_nesting" attribute were set on all
-  tasklets.
+  ``Py_WATCHDOG_IGNORE_NESTING``
+     Allows interrupts at all levels, effectively acting as
+     though the *ignore_nesting* attribute were set on all
+     tasklets.
   
-  Py_WATCHDOG_TIMEOUT:
-  interprets 'timeout' as a total timeout, rather than a
-  timeslice length.  The function will then attempt to
-  interrupt execution 
-
+  ``Py_WATCHDOG_TIMEOUT``
+     Interprets *timeout* as a fixed run time, rather than a
+     per-tasklet run limit.  The function will then attempt to
+     interrupt execution once this many total opcodes have
+     been executed since the call was made.
+     
 debugging and monitoring functions
 ----------------------------------
 
-..cfunction:: int PyStackless_SetChannelCallback(PyObject *callable)
+.. cfunction:: int PyStackless_SetChannelCallback(PyObject *callable)
 
   channel debugging.  The callable will be called on every send or receive.
   Passing NULL removes the handler.
@@ -306,7 +307,7 @@ debugging and monitoring functions
   channel, tasklet, int sendflag, int willblock
   -1 = failure
 
-..cfunction:: int PyStackless_SetScheduleCallback(PyObject *callable)
+.. cfunction:: int PyStackless_SetScheduleCallback(PyObject *callable)
 
   scheduler monitoring.
   The callable will be called on every scheduling.
@@ -316,7 +317,7 @@ debugging and monitoring functions
   After death or when main starts up, from is None.
   -1 = failure
 
-..cfunction:: void PyStackless_SetScheduleFastcallback(slp_schedule_hook_func func)
+.. cfunction:: void PyStackless_SetScheduleFastcallback(slp_schedule_hook_func func)
 
   Scheduler monitoring with a faster interface.
 
@@ -332,11 +333,11 @@ The following routines are used to support this, and you may use
 them as well if you need to make your specific functions always
 available.
 
-..cfunction:: PyObject *PyStackless_Call_Main(PyObject *func, PyObject *args, PyObject *kwds)
+.. cfunction:: PyObject *PyStackless_Call_Main(PyObject *func, PyObject *args, PyObject *kwds)
 
   Run any callable as the "main" Python function.  Returns a python object, or
   *NULL* in the case of failure.
 
-..cfunction:: PyObject *PyStackless_CallMethod_Main(PyObject *o, char *name, char *format, ...)
+.. cfunction:: PyObject *PyStackless_CallMethod_Main(PyObject *o, char *name, char *format, ...)
 
   Convenience: Run any method as the "main" Python function.  Wraps PyStackless_Call_Main.
