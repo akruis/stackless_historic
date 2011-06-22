@@ -227,9 +227,6 @@ PyAPI_FUNC(PyObject *) PyChannel_Receive_nr(PyChannelObject *self);
 PyAPI_FUNC(int) PyChannel_SendException(PyChannelObject *self,
 					PyObject *klass, PyObject *value);
 /* 0 = success	-1 = failure */
-PyAPI_FUNC(int) PyChannel_SendException_nr(PyChannelObject *self,
-					   PyObject *klass, PyObject *value);
-/* 1 = soft switched  0 = hard switched  -1 = failure */
 
 /* the next tasklet in the queue or None */
 PyAPI_FUNC(PyObject *) PyChannel_GetQueue(PyChannelObject *self);
