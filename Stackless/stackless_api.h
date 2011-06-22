@@ -153,9 +153,6 @@ PyAPI_FUNC(int) PyTasklet_GetAtomic(PyTaskletObject *task);
 PyAPI_FUNC(int) PyTasklet_GetIgnoreNesting(PyTaskletObject *task);
 /* returns the value of the ignore_nesting flag */
 
-PyAPI_FUNC(int) PyTasklet_GetPendingIrq(PyTaskletObject *task);
-/* returns the value of the pending_irq flag */
-
 PyAPI_FUNC(PyObject *) PyTasklet_GetFrame(PyTaskletObject *task);
 /* returns the frame which might be NULL */
 
