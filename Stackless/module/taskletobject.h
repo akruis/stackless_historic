@@ -13,12 +13,6 @@
 #define TASKLET_SETIGNORENESTING_HEAD(func) \
     int func (PyTaskletObject *task, int flag)
 
-#define TASKLET_BECOME_HEAD(func) \
-    PyObject *func (PyTaskletObject *task, PyObject *retval)
-
-#define TASKLET_CAPTURE_HEAD(func) \
-    PyObject *func (PyTaskletObject *task, PyObject *retval)
-
 #define TASKLET_CALL_HEAD(func) \
     int func (PyTaskletObject *task, PyObject *args, PyObject *kwds)
 
@@ -37,8 +31,6 @@ typedef struct _pytasklet_heaptype {
     TASKLET_REMOVE_HEAD(                (*remove)            );
     TASKLET_SETATOMIC_HEAD(             (*set_atomic)        );
     TASKLET_SETIGNORENESTING_HEAD(      (*set_ignore_nesting));
-    TASKLET_BECOME_HEAD(                (*become)            );
-    TASKLET_CAPTURE_HEAD(               (*capture)           );
     TASKLET_RAISE_EXCEPTION_HEAD(       (*raise_exception)   );
     TASKLET_KILL_HEAD(                  (*kill)              );
 } PyTasklet_HeapType;
