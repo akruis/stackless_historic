@@ -411,8 +411,7 @@ static TASKLET_REMOVE_HEAD(impl_tasklet_remove)
 	if (task->flags.blocked)
 		RUNTIME_ERROR("You cannot remove a blocked tasklet.", -1);
 	if (task == ts->st.current)
-		RUNTIME_ERROR("The current tasklet cannot be removed."
-		    " Use t=tasklet().capture()", -1);
+		RUNTIME_ERROR("The current tasklet cannot be removed.", -1);
 	if (task->next == NULL)
 		return 0;
 	ts->st.current = task;
@@ -659,140 +658,6 @@ bind_tasklet_to_frame(PyTaskletObject *task, PyFrameObject *frame)
 	}
 	return 0;
 	/* note: We expect that f_back is NULL, or will be adjusted immediately */
-}
-
-
-static char tasklet_become__doc__[] =
-"t.become(retval) -- catch the current running frame in a tasklet.\n\
-It is also inserted at the end of the runnables chain.\n\
-If it is a toplevel frame (and therefore has no caller), an exception is raised.\n\
-The function result is the tasklet itself. retval is passed to the calling frame.\n\
-If retval is not given, the tasklet is used as default.\
-";
-
-PyObject *
-PyTasklet_Become(PyTaskletObject *task, PyObject *retval)
-{
-	PyTasklet_HeapType *t = (PyTasklet_HeapType *)task->ob_type;
-
-	return t->become(task, retval);
-}
-
-static TASKLET_BECOME_HEAD(impl_tasklet_become)
-{
-	PyThreadState *ts = PyThreadState_GET();
-
-	assert(PyTasklet_Check(task));
-	if (ts->frame == NULL || ts->frame->f_back == NULL)
-		RUNTIME_ERROR("become/capture cannot be called from toplevel"
-			      " or no frame", NULL);
-
-	/* now we have the bound frame. Create a tasklet. */
-	if (bind_tasklet_to_frame(task, ts->frame))
-		return NULL;
-	ts->frame = ts->frame->f_back;
-	--ts->recursion_depth;
-	task->recursion_depth = 1;
-	task->f.frame->f_back = NULL;
-	Py_DECREF(ts->frame);
-	slp_current_insert(task);
-	Py_INCREF(task);
-	if (retval == NULL) retval = (PyObject*)task;
-	TASKLET_SETVAL(task, task); /* returned to caller */
-	Py_INCREF(retval);  /* returned to caller's caller */
-	return STACKLESS_PACK(retval);
-}
-
-static TASKLET_BECOME_HEAD(wrap_tasklet_become)
-{
-	PyObject * ret = PyObject_CallMethod((PyObject *)task, "become", "(O)", 
-	    retval ? retval : (PyObject *) task);
-	return ret;
-}
-
-
-static char tasklet_capture__doc__[] =
-"t.capture(retval) -- capture the current running frame in a tasklet,\n\
-like t.become(). In addition the tasklet is run immediately, and the\n\
-parent tasklet is removed from the runnables and returned as the value.\
-";
-
-PyObject *
-PyTasklet_Capture(PyTaskletObject *task, PyObject *retval)
-{
-	PyTasklet_HeapType *t = (PyTasklet_HeapType *)task->ob_type;
-
-	return t->capture(task, retval);
-}
-
-static PyObject *
-post_schedule_remove(PyFrameObject *f, int exc, PyObject *retval)
-{
-	PyThreadState *ts = PyThreadState_GET();
-	PyTaskletObject *parent = ts->st.current;
-	PyTaskletObject *self = parent->prev;
-	PyObject *ret;
-
-	ts->frame = f->f_back;
-	Py_DECREF(f);
-
-	slp_current_remove(); /* reference used in tempval */
-	TASKLET_SETVAL_OWN(self, parent);
-	TASKLET_SETVAL_OWN(parent, retval); /* consume it */
-	ret = slp_schedule_task(parent, self, 1);
-	return ret;
-}
-
-static TASKLET_CAPTURE_HEAD(impl_tasklet_capture)
-{
-	PyThreadState *ts = PyThreadState_GET();
-	PyFrameObject *save;
-
-	retval = impl_tasklet_become(task, retval);
-	if (!STACKLESS_UNWINDING(retval))
-		return NULL;
-	save = ts->frame;
-	/* create a helper frame to perform the schedule_remove after return */
-	ts->frame = (PyFrameObject *)
-		    slp_cframe_new(post_schedule_remove, 1);
-	if (ts->frame == NULL) {
-		ts->frame = save;
-		return NULL;
-	}
-	return retval;
-}
-
-static TASKLET_CAPTURE_HEAD(wrap_tasklet_capture)
-{
-	PyObject * ret = PyObject_CallMethod((PyObject *)task, "capture", "(O)", 
-	    retval ? retval : (PyObject *) task);
-	return ret;
-}
-
-
-static PyObject *
-tasklet_become(PyObject *self, PyObject *args, PyObject *kwds)
-{
-	PyObject *retval = self;
-	static char *kwlist[] = {"retval", NULL};
-
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:become", 
-					 kwlist, &retval))
-		return NULL;
-	return impl_tasklet_become((PyTaskletObject *)self, retval);
-}
-
-
-static PyObject *
-tasklet_capture(PyObject *self, PyObject *args, PyObject *kwds)
-{
-	PyObject *retval = self;
-	static char *kwlist[] = {"retval", NULL};
-
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:capture",
-					 kwlist, &retval))
-		return NULL;
-	return impl_tasklet_capture((PyTaskletObject *)self, retval);
 }
 
 /* this is also the setup method */
@@ -1351,10 +1216,6 @@ static PyMethodDef tasklet_methods[] = {
 	 tasklet_set_atomic__doc__},
 	{"set_ignore_nesting", (PCF)tasklet_set_ignore_nesting, METH_O,
 	 tasklet_set_ignore_nesting__doc__},
-	{"become",		(PCF)tasklet_become,	    METH_KEYWORDS,
-	 tasklet_become__doc__},
-	{"capture",		(PCF)tasklet_capture,	    METH_KEYWORDS,
-	 tasklet_capture__doc__},
 	{"raise_exception",	(PCF)tasklet_raise_exception, METH_KS,
 	tasklet_raise_exception__doc__},
 	{"kill",		(PCF)tasklet_kill,	    METH_NS,
@@ -1378,8 +1239,6 @@ static PyCMethodDef tasklet_cmethods[] = {
 	CMETHOD_PUBLIC_ENTRY(PyTasklet_HeapType, tasklet, remove),
 	CMETHOD_PUBLIC_ENTRY(PyTasklet_HeapType, tasklet, set_atomic),
 	CMETHOD_PUBLIC_ENTRY(PyTasklet_HeapType, tasklet, set_ignore_nesting),
-	CMETHOD_PUBLIC_ENTRY(PyTasklet_HeapType, tasklet, become),
-	CMETHOD_PUBLIC_ENTRY(PyTasklet_HeapType, tasklet, capture),
 	CMETHOD_PUBLIC_ENTRY(PyTasklet_HeapType, tasklet, raise_exception),
 	CMETHOD_PUBLIC_ENTRY(PyTasklet_HeapType, tasklet, kill),
 	{NULL}                       /* sentinel */

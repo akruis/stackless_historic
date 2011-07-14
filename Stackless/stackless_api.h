@@ -40,7 +40,6 @@ extern "C" {
  * create a new tasklet object.
  * type must be derived from PyTasklet_Type or NULL.
  * func must (yet) be a callable object (normal usecase)
- * or NULL, if the tasklet is being used via capture().
  */
 PyAPI_FUNC(PyTaskletObject *) PyTasklet_New(PyTypeObject *type, PyObject *func);
 /* 0 = success	-1 = failure */
@@ -75,29 +74,6 @@ PyAPI_FUNC(int) PyTasklet_Remove(PyTaskletObject *task);
  */
 PyAPI_FUNC(int) PyTasklet_Insert(PyTaskletObject *task);
 /* 0 = success	-1 = failure */
-
-/*
- * wrap the currently running frame into a tasklet.
- * self must be an unbound tasklet instance.
- * retval is the return value for the parent frame.
- * if retval is NULL, self is used as return value.
- * note: you must return the value in any case.
- * It is either NULL, or Py_UnwindToken, and we leave eval_code.
- */
-PyAPI_FUNC(PyObject *) PyTasklet_Become(PyTaskletObject *self,
-					PyObject *retval);
-/* PyUnwindToken = success  NULL = failure */
-
-/*
- * similar to PyTasklet_Become, but the newly bound
- * tasklet immediately continues, removes the former
- * tasklet from the runnables and returns it as its value.
- * note: you must return the value in any case.
- * It is either NULL, or Py_UnwindToken, and we leave eval_code.
- */
-PyAPI_FUNC(PyObject *) PyTasklet_Capture(PyTaskletObject *self,
-					 PyObject *retval);
-/* PyUnwindToken = success  NULL = failure */
 
 /*
  * raising an exception for a tasklet.
