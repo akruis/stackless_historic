@@ -892,7 +892,6 @@ int PyTasklet_GetIgnoreNesting(PyTaskletObject *task)
 static PyObject *
 tasklet_get_frame(PyTaskletObject *task)
 {
-    PyFrameObject *f = (PyFrameObject *) slp_get_frame(task);
     PyObject *ret = PyTasklet_GetFrame(task);
     if (ret == NULL)
         Py_RETURN_NONE;
