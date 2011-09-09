@@ -12,6 +12,7 @@
 #include "channelobject.h"
 #include "pickling/prickelpit.h"
 #include "core/stackless_methods.h"
+#include "pythread.h"
 
 /******************************************************
 
@@ -147,6 +148,45 @@ static PyObject *
 getcurrent(PyObject *self)
 {
     return PyStackless_GetCurrent();
+}
+
+static char getcurrentid__doc__[] =
+"getcurrentid() -- return the id of the currently executing tasklet.";
+
+long
+PyStackless_GetCurrentId(void)
+{
+    PyThreadState *ts = PyGILState_GetThisThreadState();
+    PyTaskletObject *t = NULL;
+    if (ts != NULL)
+        t = ts->st.current;
+    /* tasklets that are not the "main" tasklets for each thread
+     * use a hash of their object pointer as ID
+     */
+    if (t && t != ts->st.main) {
+#if SIZEOF_VOID_P > SIZEOF_LONG
+        return (long)t ^ (long)((intptr_t)t >> 32);
+#else
+        return (long)t;
+#endif
+    }
+    /* We want the ID to be constant, before and after a main tasklet
+     * is initialized on a thread.Therefore, for a main tasklet, we use its
+     * thread ID.
+     */
+    if (ts)
+        return ts->thread_id;
+#ifdef WITH_THREAD
+    return PyThread_get_thread_ident();
+#else
+    return 0;
+#endif
+}
+
+static PyObject *
+getcurrentid(PyObject *self)
+{
+    return PyInt_FromLong(PyStackless_GetCurrentId());
 }
 
 static char getmain__doc__[] =
@@ -841,7 +881,9 @@ static PyMethodDef stackless_methods[] = {
     {"getruncount",                 (PCF)getruncount,           METH_NOARGS,
      getruncount__doc__},
     {"getcurrent",                  (PCF)getcurrent,            METH_NOARGS,
-     getcurrent__doc__},
+    getcurrent__doc__},
+    {"getcurrentid",                (PCF)getcurrentid,          METH_NOARGS,
+    getcurrentid__doc__},
     {"getmain",                     (PCF)getmain,               METH_NOARGS,
      getmain__doc__},
     {"enable_softswitch",           (PCF)enable_softswitch,     METH_O,
