@@ -140,7 +140,7 @@ PyStackless_GetCurrent(void)
     PyThreadState *ts = PyThreadState_GET();
     PyObject *t = (PyObject*)ts->st.current;
 
-    Py_INCREF(t);
+    Py_XINCREF(t);
     return t;
 }
 
@@ -1206,7 +1206,7 @@ _PyStackless_Init(void)
     PySlpModuleObject *m;
 
     if (init_slpmoduletype())
-        return;
+        goto error;
 
     /* record the thread state for thread support */
     slp_initial_tstate = PyThreadState_GET();
@@ -1215,24 +1215,29 @@ _PyStackless_Init(void)
     /* this is a clone of PyImport_AddModule */
 
     modules = PyImport_GetModuleDict();
+    if (modules == NULL)
+        goto error;
     slp_module = slpmodule_new(name);
     if (slp_module == NULL || PyDict_SetItemString(modules, name, slp_module)) {
         Py_DECREF(slp_module);
-        return;
+        goto error;
     }
     Py_DECREF(slp_module); /* Yes, it still exists, in modules! */
 
     /* Create the module and add the functions */
     slp_module = Py_InitModule3("stackless", stackless_methods, stackless__doc__);
     if (slp_module == NULL)
-        return; /* errors handled by caller */
+        goto error;
 
-    if (init_prickelpit()) return;
+    if (slp_cstack_init()) goto error;
+    if (init_prickelpit()) goto error;
 
     dict = PyModule_GetDict(slp_module);
+    if (dict == NULL)
+        goto error;
 
 #define INSERT(name, object) \
-    if (PyDict_SetItemString(dict, name, (PyObject*)object) < 0) return
+    if (PyDict_SetItemString(dict, name, (PyObject*)object) < 0) goto error;
 
     INSERT("slpmodule", PySlpModule_TypePtr);
     INSERT("cframe",    &PyCFrame_Type);
@@ -1243,8 +1248,13 @@ _PyStackless_Init(void)
     INSERT("stackless", slp_module);
 
     m = (PySlpModuleObject *) slp_module;
-    slpmodule_set__tasklet__(m, &PyTasklet_Type, NULL);
-    slpmodule_set__channel__(m, &PyChannel_Type, NULL);
+    if (slpmodule_set__tasklet__(m, &PyTasklet_Type, NULL)) goto error;
+    if (slpmodule_set__channel__(m, &PyChannel_Type, NULL)) goto error;
+
+    return;
+error:
+    PyErr_Print();
+    Py_FatalError("initializing stackless module failed");
 }
 
 void
