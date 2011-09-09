@@ -360,12 +360,12 @@ int PyStackless_SetChannelCallback(PyObject *callable)
 }
 
 
-static char channel_send__doc__[] =
+PyDoc_STRVAR( channel_send__doc__,
 "channel.send(value) -- send a value over the channel.\n\
 If no other tasklet is already receiving on the channel,\n\
 the sender will be blocked. Otherwise, the receiver will\n\
 be activated immediately, and the sender is put at the end of\n\
-the runnables list.";
+the runnables list.");
 
 static PyObject *
 PyChannel_Send_M(PyChannelObject *self, PyObject *arg)
@@ -509,10 +509,10 @@ channel_send(PyObject *myself, PyObject *arg)
 }
 
 
-static char channel_send_exception__doc__[] =
+PyDoc_STRVAR( channel_send_exception__doc__,
 "channel.send_exception(exc, value) -- send an exception over the channel.\n\
 exc must be a subclass of Exception.\n\
-Behavior is like channel.send, but that the receiver gets an exception.";
+Behavior is like channel.send, but that the receiver gets an exception.");
 
 static PyObject *
 PyChannel_SendException_M(PyChannelObject *self, PyObject *klass,
@@ -582,13 +582,13 @@ err_exit:
     return retval;
 }
 
-static char channel_receive__doc__[] =
+PyDoc_STRVAR( channel_receive__doc__,
 "channel.receive() -- receive a value over the channel.\n\
 If no other tasklet is already sending on the channel,\n\
 the receiver will be blocked. Otherwise, the receiver will\n\
 continue immediately, and the sender is put at the end of\n\
 the runnables list.\n\
-The above policy can be changed by setting channel flags.";
+The above policy can be changed by setting channel flags.");
 
 static PyObject *
 PyChannel_Receive_M(PyChannelObject *self)
@@ -715,10 +715,10 @@ channel_getiter(PyObject *self)
  * any extra method call. :-)
  */
 
-static char channel_send_sequence__doc__[] =
+PyDoc_STRVAR( channel_send_sequence__doc__,
 "channel.send_sequence(seq) -- send a stream of values\n\
 over the channel. Combined with a generator, this is\n\
-a very efficient way to build fast pipes.";
+a very efficient way to build fast pipes.");
 
 /*
  * this is the traight-forward and simple implementation,
@@ -877,11 +877,11 @@ error:
 }
 
 
-static char channel_close__doc__[] =
+PyDoc_STRVAR( channel_close__doc__,
 "channel.close() -- stops the channel from enlarging its queue.\n\
 \n\
 If the channel is not empty, the flag 'closing' becomes true.\n\
-If the channel is empty, the flag 'closed' becomes true.";
+If the channel is empty, the flag 'closed' becomes true.");
 
 static PyObject *
 channel_close(PyChannelObject *self)
@@ -898,8 +898,8 @@ PyChannel_Close(PyChannelObject *self)
     self->flags.closing = 1;
 }
 
-static char channel_open__doc__[] =
-"channel.open() -- reopen a channel. See channel.close.";
+PyDoc_STRVAR( channel_open__doc__,
+"channel.open() -- reopen a channel. See channel.close.");
 
 static PyObject *
 channel_open(PyChannelObject *self)
@@ -916,8 +916,8 @@ PyChannel_Open(PyChannelObject *self)
     self->flags.closing = 0;
 }
 
-static char channel_reduce__doc__[] =
-"channel.__reduce__() -- currently does not distinguish threads.";
+PyDoc_STRVAR( channel_reduce__doc__,
+"channel.__reduce__() -- currently does not distinguish threads.");
 
 static PyObject *
 channel_reduce(PyChannelObject * ch)
@@ -945,8 +945,8 @@ err_exit:
     return tup;
 }
 
-static char channel_setstate__doc__[] =
-"channel.__setstate__(balance, flags, [tasklets]) -- currently does not distinguish threads.";
+PyDoc_STRVAR( channel_setstate__doc__,
+"channel.__setstate__(balance, flags, [tasklets]) -- currently does not distinguish threads.");
 
 static PyObject *
 channel_setstate(PyObject *self, PyObject *args)
@@ -1020,13 +1020,13 @@ channel_methods[] = {
     {NULL,                  NULL}             /* sentinel */
 };
 
-static char channel__doc__[] =
+PyDoc_STRVAR( channel__doc__,
 "A channel object is used for communication between tasklets.\n\
 By sending on a channel, a tasklet that is waiting to receive\n\
 is resumed. If there is no waiting receiver, the sender is suspended.\n\
 By receiving from a channel, a tasklet that is waiting to send\n\
 is resumed. If there is no waiting sender, the receiver is suspended.\
-";
+");
 
 PyTypeObject _PyChannel_Type = {
     PyObject_HEAD_INIT(&PyType_Type)

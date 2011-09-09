@@ -201,13 +201,13 @@ PyTasklet_Bind(PyTaskletObject *task, PyObject *func)
     return task;
 }
 
-static char tasklet_bind__doc__[] =
+PyDoc_STRVAR( tasklet_bind__doc__,
 "Binding a tasklet to a callable object.\n\
 The callable is usually passed in to the constructor.\n\
 In some cases, it makes sense to be able to re-bind a tasklet,\n\
 after it has been run, in order to keep its identity.\n\
 Note that a tasklet can only be bound when it doesn't have a frame.\
-";
+");
 
 static PyObject *
 tasklet_bind(PyObject *self, PyObject *func)
@@ -231,12 +231,12 @@ tasklet_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 /* tasklet pickling support */
 
-static char tasklet_reduce__doc__[] =
+PyDoc_STRVAR( tasklet_reduce__doc__,
 "Pickling a tasklet for later re-animation.\n\
 Note that a tasklet can always be pickled, unless it is current.\n\
 Whether it can be run after unpickling depends on the state of the\n\
 involved frames. In general, you cannot run a frame with a C state.\
-";
+");
 
 /*
 Notes on pickling:
@@ -286,11 +286,11 @@ err_exit:
 }
 
 
-static char tasklet_setstate__doc__[] =
+PyDoc_STRVAR( tasklet_setstate__doc__,
 "Tasklets are first created without parameters, and then __setstate__\n\
 is called. This was necessary, since pickle has problems pickling\n\
 extension types when they reference themselves.\
-";
+");
 
 /* note that args is a tuple, although we use METH_O */
 
@@ -373,14 +373,14 @@ tasklet_setstate(PyObject *self, PyObject *args)
 
 /* other tasklet methods */
 
-static char tasklet_remove__doc__[] =
+PyDoc_STRVAR( tasklet_remove__doc__,
 "Removing a tasklet from the runnables queue.\n\
 Note: If this tasklet has a non-trivial C stack attached,\n\
 it will be destructed when the containing thread state is destroyed.\n\
 Since this will happen in some unpredictable order, it may cause unwanted\n\
 side-effects. Therefore it is recommended to either run tasklets to the\n\
 end or to explicitly kill() them.\
-";
+");
 
 
 static int
@@ -439,10 +439,10 @@ tasklet_remove(PyObject *self)
 }
 
 
-static char tasklet_insert__doc__[] =
+PyDoc_STRVAR( tasklet_insert__doc__,
 "Insert this tasklet at the end of the scheduler list,\n\
 given that it isn't blocked.\n\
-Blocked tasklets need to be reactivated by channels.";
+Blocked tasklets need to be reactivated by channels.");
 
 int
 PyTasklet_Insert(PyTaskletObject *task)
@@ -488,9 +488,9 @@ tasklet_insert(PyObject *self)
 }
 
 
-static char tasklet_run__doc__[] =
+PyDoc_STRVAR( tasklet_run__doc__,
 "Run this tasklet, given that it isn't blocked.\n\
-Blocked tasks need to be reactivated by channels.";
+Blocked tasks need to be reactivated by channels.");
 
 static PyObject *
 PyTasklet_Run_M(PyTaskletObject *task)
@@ -539,7 +539,7 @@ tasklet_run(PyObject *self)
     return impl_tasklet_run((PyTaskletObject *) self);
 }
 
-static char tasklet_set_atomic__doc__[] =
+PyDoc_STRVAR( tasklet_set_atomic__doc__,
 "t.set_atomic(flag) -- set tasklet atomic status and return current one.\n\
 If set, the tasklet will not be auto-scheduled.\n\
 This flag is useful for critical sections which should not be interrupted.\n\
@@ -551,7 +551,7 @@ Note: Whenever a new tasklet is created, the atomic flag is initialized\n\
 with the atomic flag of the current tasklet.\
 Atomic behavior is additionally influenced by the interpreter nesting level.\
 See set_ignore_nesting.\
-";
+");
 
 
 int
@@ -591,7 +591,7 @@ tasklet_set_atomic(PyObject *self, PyObject *flag)
 }
 
 
-static char tasklet_set_ignore_nesting__doc__[] =
+PyDoc_STRVAR( tasklet_set_ignore_nesting__doc__,
 "t.set_ignore_nesting(flag) -- set tasklet ignore_nesting status and return current one.\n\
 If set, the tasklet may be be auto-scheduled, even if its nesting_level is > 0.\n\
 This flag makes sense if you know that nested interpreter levels are safe\n\
@@ -600,7 +600,7 @@ usage:\n\
     tmp = t.set_ignore_nesting(1)\n\
     # do critical stuff\n\
     t.set_ignore_nesting(tmp)\
-";
+");
 
 
 int
@@ -663,7 +663,7 @@ bind_tasklet_to_frame(PyTaskletObject *task, PyFrameObject *frame)
 
 /* this is also the setup method */
 
-static char tasklet_setup__doc__[] = "supply the parameters for the callable";
+PyDoc_STRVAR( tasklet_setup__doc__, "supply the parameters for the callable");
 
 static int
 PyTasklet_Setup_M(PyTaskletObject *task, PyObject *args, PyObject *kwds)
@@ -719,10 +719,10 @@ tasklet_setup(PyObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-static char tasklet_raise_exception__doc__[] =
+PyDoc_STRVAR( tasklet_raise_exception__doc__,
 "tasklet.raise_exception(exc, value) -- raise an exception for the tasklet.\n\
 exc must be a subclass of Exception.\n\
-The tasklet is immediately activated.";
+The tasklet is immediately activated.");
 
 static PyObject *
 PyTasklet_RaiseException_M(PyTaskletObject *self, PyObject *klass,
@@ -789,12 +789,12 @@ err_exit:
 }
 
 
-static char tasklet_kill__doc__[] =
+PyDoc_STRVAR( tasklet_kill__doc__,
 "tasklet.kill -- raise a TaskletExit exception for the tasklet.\n\
 Note that this is a regular exception that can be caught.\n\
 The tasklet is immediately activated.\n\
 If the exception passes the toplevel frame of the tasklet,\n\
-the tasklet will silently die.";
+the tasklet will silently die.");
 
 int PyTasklet_Kill(PyTaskletObject *task)
 {
@@ -1248,12 +1248,12 @@ static PyCMethodDef tasklet_cmethods[] = {
     {NULL}                       /* sentinel */
 };
 
-static char tasklet__doc__[] =
+PyDoc_STRVAR( tasklet__doc__,
 "A tasklet object represents a tiny task in a Python thread.\n\
 At program start, there is always one running main tasklet.\n\
 New tasklets can be created with methods from the stackless\n\
 module.\n\
-";
+");
 
 
 PyTypeObject _PyTasklet_Type = {
