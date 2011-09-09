@@ -24,7 +24,7 @@ PyObject *slp_module = NULL;
 
 PyThreadState *slp_initial_tstate = NULL;
 
-PyDoc_STRVAR( schedule__doc__,
+PyDoc_STRVAR(schedule__doc__,
 "schedule(retval=stackless.current) -- switch to the next runnable tasklet.\n\
 The return value for this call is retval, with the current\n\
 tasklet as default.\n\
@@ -113,7 +113,7 @@ schedule_remove(PyObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-PyDoc_STRVAR( getruncount__doc__,
+PyDoc_STRVAR(getruncount__doc__,
 "getruncount() -- return the number of runnable tasklets.");
 
 int
@@ -131,7 +131,7 @@ getruncount(PyObject *self)
 }
 
 
-PyDoc_STRVAR( getcurrent__doc__,
+PyDoc_STRVAR(getcurrent__doc__,
 "getcurrent() -- return the currently executing tasklet.");
 
 PyObject *
@@ -150,7 +150,7 @@ getcurrent(PyObject *self)
     return PyStackless_GetCurrent();
 }
 
-PyDoc_STRVAR( getcurrentid__doc__,
+PyDoc_STRVAR(getcurrentid__doc__,
 "getcurrentid() -- return the id of the currently executing tasklet.");
 
 long
@@ -189,7 +189,7 @@ getcurrentid(PyObject *self)
     return PyInt_FromLong(PyStackless_GetCurrentId());
 }
 
-PyDoc_STRVAR( getmain__doc__,
+PyDoc_STRVAR(getmain__doc__,
 "getmain() -- return the main tasklet of this thread.");
 
 static PyObject *
@@ -201,7 +201,7 @@ getmain(PyObject *self)
     return t;
 }
 
-PyDoc_STRVAR( enable_soft__doc__,
+PyDoc_STRVAR(enable_soft__doc__,
 "enable_softswitch(flag) -- control the switching behavior.\n"
 "Tasklets can be either switched by moving C stack slices around\n"
 "or by avoiding stack changes at all. The latter is only possible\n"
@@ -226,7 +226,7 @@ enable_softswitch(PyObject *self, PyObject *flag)
 }
 
 
-PyDoc_STRVAR( run_watchdog__doc__,
+PyDoc_STRVAR(run_watchdog__doc__,
 "run_watchdog(timeout=0, threadblock=False, soft=False,\n\
               ignore_nesting=False, totaltimeout=False) -- \n\
 run tasklets until they are all\n\
@@ -373,7 +373,7 @@ run_watchdog(PyObject *self, PyObject *args, PyObject *kwds)
     return PyStackless_RunWatchdogEx(timeout, flags);
 }
 
-PyDoc_STRVAR( get_thread_info__doc__,
+PyDoc_STRVAR(get_thread_info__doc__,
 "get_thread_info(thread_id) -- return a 3-tuple of the thread's\n\
 main tasklet, current tasklet and runcount.\n\
 To obtain a list of all thread infos, use\n\
@@ -415,7 +415,7 @@ slpmodule_reduce(PyObject *self)
  ******************************************************/
 
 
-PyDoc_STRVAR( test_cframe__doc__,
+PyDoc_STRVAR(test_cframe__doc__,
 "test_cframe(switches, words=0) -- a builtin testing function that does nothing\n\
 but tasklet switching. The function will call PyStackless_Schedule() for switches\n\
 times and then finish.\n\
@@ -462,7 +462,7 @@ test_cframe(PyObject *self, PyObject *args, PyObject *kwds)
     return ret;
 }
 
-PyDoc_STRVAR( test_outside__doc__,
+PyDoc_STRVAR(test_outside__doc__,
 "test_outside() -- a builtin testing function.\n\
 This function simulates an application that does not run \"inside\"\n\
 Stackless, with active, running frames, but always needs to initialize\n\
@@ -514,7 +514,7 @@ test_outside(PyObject *self)
 }
 
 
-PyDoc_STRVAR( test_cframe_nr__doc__,
+PyDoc_STRVAR(test_cframe_nr__doc__,
 "test_cframe_nr(switches) -- a builtin testing function that does nothing\n\
 but soft tasklet switching. The function will call PyStackless_Schedule_nr() for switches\n\
 times and then finish.\n\
@@ -569,7 +569,7 @@ test_cframe_nr(PyObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-PyDoc_STRVAR( test_cstate__doc__,
+PyDoc_STRVAR(test_cstate__doc__,
 "test_cstate(callable) -- a builtin testing function that simply returns the\n\
 result of calling its single argument.  Used for testing to force stackless\n\
 into using hard switching.");
@@ -678,7 +678,7 @@ int PyStackless_SetScheduleCallback(PyObject *callable)
     return 0;
 }
 
-PyDoc_STRVAR( set_schedule_callback__doc__,
+PyDoc_STRVAR(set_schedule_callback__doc__,
 "set_schedule_callback(callable) -- install a callback for scheduling.\n\
 Every explicit or implicit schedule will call the callback function.\n\
 Example:\n\
@@ -700,7 +700,7 @@ set_schedule_callback(PyObject *self, PyObject *arg)
 }
 
 
-PyDoc_STRVAR( set_channel_callback__doc__,
+PyDoc_STRVAR(set_channel_callback__doc__,
 "set_channel_callback(callable) -- install a callback for channels.\n\
 Every send/receive action will call the callback function.\n\
 Example:\n\
@@ -769,7 +769,7 @@ noobject:
     return v;
 }
 
-PyDoc_STRVAR( _peek__doc__,
+PyDoc_STRVAR(_peek__doc__,
 "_peek(adr) -- try to find an object at adr.\n\
 When no object is found, the address is returned.\n\
 _peek(None)  _peek's address.\n\
@@ -783,7 +783,7 @@ Internal, considered dangerous!");
 
 #if defined(Py_TRACE_REFS)
 
-PyDoc_STRVAR( _get_refinfo__doc__,
+PyDoc_STRVAR(_get_refinfo__doc__,
 "_get_refinfo -- return (maximum referenced object,\n"
 "refcount, ref_total, computed total)");
 
@@ -810,7 +810,7 @@ _get_refinfo(PyObject *self)
                          computed_total);
 }
 
-PyDoc_STRVAR( _get_all_objects__doc__,
+PyDoc_STRVAR(_get_all_objects__doc__,
 "_get_all_objects -- return a list with all objects but the list.");
 
 static PyObject *
@@ -862,7 +862,7 @@ _gc_track(PyObject *self, PyObject *ob)
     return Py_None;
 }
 
-PyDoc_STRVAR( _gc_untrack__doc__,
+PyDoc_STRVAR(_gc_untrack__doc__,
 "_gc_untrack, gc_track -- remove or add an object from the gc list.");
 
 
@@ -881,7 +881,7 @@ static PyMethodDef stackless_methods[] = {
     {"getruncount",                 (PCF)getruncount,           METH_NOARGS,
      getruncount__doc__},
     {"getcurrent",                  (PCF)getcurrent,            METH_NOARGS,
-    getcurrent__doc__},
+     getcurrent__doc__},
     {"getcurrentid",                (PCF)getcurrentid,          METH_NOARGS,
     getcurrentid__doc__},
     {"getmain",                     (PCF)getmain,               METH_NOARGS,
@@ -1024,7 +1024,7 @@ slpmodule_getdebug(PySlpModuleObject *mod)
     return ret;
 }
 
-PyDoc_STRVAR( uncollectables__doc__,
+PyDoc_STRVAR(uncollectables__doc__,
 "Get a list of all tasklets which have a non-trivial C stack.\n\
 These might need to be killed manually in order to free memory,\n\
 since their C stack might prevent garbage collection.\n\
@@ -1074,28 +1074,28 @@ slpmodule_getthreads(PySlpModuleObject *mod, void *context)
 static PyGetSetDef slpmodule_getsetlist[] = {
     {"__tasklet__", (getter)slpmodule_get__tasklet__,
                     (setter)slpmodule_set__tasklet__,
-     "The default tasklet type to be used.\n"
-     "It must be derived from the basic tasklet type."},
+     PyDoc_STR("The default tasklet type to be used.\n"
+     "It must be derived from the basic tasklet type.")},
     {"__channel__", (getter)slpmodule_get__channel__,
                     (setter)slpmodule_set__channel__,
-     "The default channel type to be used.\n"
-     "It must be derived from the basic channel type."},
+     PyDoc_STR("The default channel type to be used.\n"
+     "It must be derived from the basic channel type.")},
     {"runcount",        (getter)getruncount, NULL,
-     "The number of currently runnable tasklets."},
+     PyDoc_STR("The number of currently runnable tasklets.")},
     {"current",         (getter)getcurrent, NULL,
-     "The currently executing tasklet."},
+     PyDoc_STR("The currently executing tasklet.")},
     {"main",            (getter)getmain, NULL,
-     "The main tasklet of this thread."},
+     PyDoc_STR("The main tasklet of this thread.")},
     {"debug",           (getter)slpmodule_getdebug, NULL,
-     "Flag telling whether this was a debug build."},
+     PyDoc_STR("Flag telling whether this was a debug build.")},
     {"uncollectables", (getter)slpmodule_getuncollectables, NULL,
      uncollectables__doc__},
     {"threads", (getter)slpmodule_getthreads, NULL,
-     "a list of all thread ids, starting with main."},
+     PyDoc_STR("a list of all thread ids, starting with main.")},
     {0},
 };
 
-PyDoc_STRVAR( PySlpModule_Type__doc__,
+PyDoc_STRVAR(PySlpModule_Type__doc__,
 "The stackless module has a special type derived from\n\
 the module type, in order to be able to override some attributes.\n\
 __tasklet__ and __channel__ are the default types\n\

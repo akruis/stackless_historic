@@ -248,26 +248,26 @@ PyChannel_GetBalance(PyChannelObject *self)
 
 static PyGetSetDef channel_getsetlist[] = {
     {"queue",                   (getter)channel_get_queue, NULL,
-     "the chain of waiting tasklets."},
+     PyDoc_STR("the chain of waiting tasklets.")},
     {"closing",                 (getter)channel_get_closing, NULL,
-     "True when close was called."},
+     PyDoc_STR("True when close was called.")},
     {"closed",                  (getter)channel_get_closed, NULL,
-     "True when close was called and the channel is empty.."},
+     PyDoc_STR("True when close was called and the channel is empty..")},
     {"preference",              (getter)channel_get_preference,
                             (setter)channel_set_preference,
-     "-1 prefer receiver (default), 1 prefer sender, 0 don't\n"
-     "prefer anything. See also schedule_all"},
+     PyDoc_STR("-1 prefer receiver (default), 1 prefer sender, 0 don't\n"
+     "prefer anything. See also schedule_all")},
     {"schedule_all",            (getter)channel_get_schedule_all,
                             (setter)channel_set_schedule_all,
-     "schedule to the next runnable on any channel action.\n"
-     "overrides preference."},
+     PyDoc_STR("schedule to the next runnable on any channel action.\n"
+     "overrides preference.")},
     {0}
 };
 
 
 static PyMemberDef channel_members[] = {
     {"balance", T_INT, offsetof(PyChannelObject, balance), READONLY,
-     "the number of tasklets waiting to send (>0) or receive (<0)."},
+     PyDoc_STR("the number of tasklets waiting to send (>0) or receive (<0).")},
     {0}
 };
 
@@ -360,7 +360,7 @@ int PyStackless_SetChannelCallback(PyObject *callable)
 }
 
 
-PyDoc_STRVAR( channel_send__doc__,
+PyDoc_STRVAR(channel_send__doc__,
 "channel.send(value) -- send a value over the channel.\n\
 If no other tasklet is already receiving on the channel,\n\
 the sender will be blocked. Otherwise, the receiver will\n\
@@ -509,7 +509,7 @@ channel_send(PyObject *myself, PyObject *arg)
 }
 
 
-PyDoc_STRVAR( channel_send_exception__doc__,
+PyDoc_STRVAR(channel_send_exception__doc__,
 "channel.send_exception(exc, value) -- send an exception over the channel.\n\
 exc must be a subclass of Exception.\n\
 Behavior is like channel.send, but that the receiver gets an exception.");
@@ -582,7 +582,7 @@ err_exit:
     return retval;
 }
 
-PyDoc_STRVAR( channel_receive__doc__,
+PyDoc_STRVAR(channel_receive__doc__,
 "channel.receive() -- receive a value over the channel.\n\
 If no other tasklet is already sending on the channel,\n\
 the receiver will be blocked. Otherwise, the receiver will\n\
@@ -715,7 +715,7 @@ channel_getiter(PyObject *self)
  * any extra method call. :-)
  */
 
-PyDoc_STRVAR( channel_send_sequence__doc__,
+PyDoc_STRVAR(channel_send_sequence__doc__,
 "channel.send_sequence(seq) -- send a stream of values\n\
 over the channel. Combined with a generator, this is\n\
 a very efficient way to build fast pipes.");
@@ -877,7 +877,7 @@ error:
 }
 
 
-PyDoc_STRVAR( channel_close__doc__,
+PyDoc_STRVAR(channel_close__doc__,
 "channel.close() -- stops the channel from enlarging its queue.\n\
 \n\
 If the channel is not empty, the flag 'closing' becomes true.\n\
@@ -898,7 +898,7 @@ PyChannel_Close(PyChannelObject *self)
     self->flags.closing = 1;
 }
 
-PyDoc_STRVAR( channel_open__doc__,
+PyDoc_STRVAR(channel_open__doc__,
 "channel.open() -- reopen a channel. See channel.close.");
 
 static PyObject *
@@ -916,7 +916,7 @@ PyChannel_Open(PyChannelObject *self)
     self->flags.closing = 0;
 }
 
-PyDoc_STRVAR( channel_reduce__doc__,
+PyDoc_STRVAR(channel_reduce__doc__,
 "channel.__reduce__() -- currently does not distinguish threads.");
 
 static PyObject *
@@ -945,7 +945,7 @@ err_exit:
     return tup;
 }
 
-PyDoc_STRVAR( channel_setstate__doc__,
+PyDoc_STRVAR(channel_setstate__doc__,
 "channel.__setstate__(balance, flags, [tasklets]) -- currently does not distinguish threads.");
 
 static PyObject *
@@ -1020,7 +1020,7 @@ channel_methods[] = {
     {NULL,                  NULL}             /* sentinel */
 };
 
-PyDoc_STRVAR( channel__doc__,
+PyDoc_STRVAR(channel__doc__,
 "A channel object is used for communication between tasklets.\n\
 By sending on a channel, a tasklet that is waiting to receive\n\
 is resumed. If there is no waiting receiver, the sender is suspended.\n\

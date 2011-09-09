@@ -190,7 +190,7 @@ static PyMethodDef bomb_methods[] = {
     {NULL,     NULL}             /* sentinel */
 };
 
-PyDoc_STRVAR( bomb__doc__,
+PyDoc_STRVAR(bomb__doc__,
 "A bomb object is used to hold exceptions in tasklets.\n\
 Whenever a tasklet is activated and its tempval is a bomb,\n\
 it will explode as an exception.\n\

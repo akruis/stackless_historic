@@ -201,7 +201,7 @@ PyTasklet_Bind(PyTaskletObject *task, PyObject *func)
     return task;
 }
 
-PyDoc_STRVAR( tasklet_bind__doc__,
+PyDoc_STRVAR(tasklet_bind__doc__,
 "Binding a tasklet to a callable object.\n\
 The callable is usually passed in to the constructor.\n\
 In some cases, it makes sense to be able to re-bind a tasklet,\n\
@@ -231,7 +231,7 @@ tasklet_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 /* tasklet pickling support */
 
-PyDoc_STRVAR( tasklet_reduce__doc__,
+PyDoc_STRVAR(tasklet_reduce__doc__,
 "Pickling a tasklet for later re-animation.\n\
 Note that a tasklet can always be pickled, unless it is current.\n\
 Whether it can be run after unpickling depends on the state of the\n\
@@ -286,7 +286,7 @@ err_exit:
 }
 
 
-PyDoc_STRVAR( tasklet_setstate__doc__,
+PyDoc_STRVAR(tasklet_setstate__doc__,
 "Tasklets are first created without parameters, and then __setstate__\n\
 is called. This was necessary, since pickle has problems pickling\n\
 extension types when they reference themselves.\
@@ -373,7 +373,7 @@ tasklet_setstate(PyObject *self, PyObject *args)
 
 /* other tasklet methods */
 
-PyDoc_STRVAR( tasklet_remove__doc__,
+PyDoc_STRVAR(tasklet_remove__doc__,
 "Removing a tasklet from the runnables queue.\n\
 Note: If this tasklet has a non-trivial C stack attached,\n\
 it will be destructed when the containing thread state is destroyed.\n\
@@ -439,7 +439,7 @@ tasklet_remove(PyObject *self)
 }
 
 
-PyDoc_STRVAR( tasklet_insert__doc__,
+PyDoc_STRVAR(tasklet_insert__doc__,
 "Insert this tasklet at the end of the scheduler list,\n\
 given that it isn't blocked.\n\
 Blocked tasklets need to be reactivated by channels.");
@@ -488,7 +488,7 @@ tasklet_insert(PyObject *self)
 }
 
 
-PyDoc_STRVAR( tasklet_run__doc__,
+PyDoc_STRVAR(tasklet_run__doc__,
 "Run this tasklet, given that it isn't blocked.\n\
 Blocked tasks need to be reactivated by channels.");
 
@@ -539,7 +539,7 @@ tasklet_run(PyObject *self)
     return impl_tasklet_run((PyTaskletObject *) self);
 }
 
-PyDoc_STRVAR( tasklet_set_atomic__doc__,
+PyDoc_STRVAR(tasklet_set_atomic__doc__,
 "t.set_atomic(flag) -- set tasklet atomic status and return current one.\n\
 If set, the tasklet will not be auto-scheduled.\n\
 This flag is useful for critical sections which should not be interrupted.\n\
@@ -591,7 +591,7 @@ tasklet_set_atomic(PyObject *self, PyObject *flag)
 }
 
 
-PyDoc_STRVAR( tasklet_set_ignore_nesting__doc__,
+PyDoc_STRVAR(tasklet_set_ignore_nesting__doc__,
 "t.set_ignore_nesting(flag) -- set tasklet ignore_nesting status and return current one.\n\
 If set, the tasklet may be be auto-scheduled, even if its nesting_level is > 0.\n\
 This flag makes sense if you know that nested interpreter levels are safe\n\
@@ -663,7 +663,7 @@ bind_tasklet_to_frame(PyTaskletObject *task, PyFrameObject *frame)
 
 /* this is also the setup method */
 
-PyDoc_STRVAR( tasklet_setup__doc__, "supply the parameters for the callable");
+PyDoc_STRVAR(tasklet_setup__doc__, "supply the parameters for the callable");
 
 static int
 PyTasklet_Setup_M(PyTaskletObject *task, PyObject *args, PyObject *kwds)
@@ -719,7 +719,7 @@ tasklet_setup(PyObject *self, PyObject *args, PyObject *kwds)
 }
 
 
-PyDoc_STRVAR( tasklet_raise_exception__doc__,
+PyDoc_STRVAR(tasklet_raise_exception__doc__,
 "tasklet.raise_exception(exc, value) -- raise an exception for the tasklet.\n\
 exc must be a subclass of Exception.\n\
 The tasklet is immediately activated.");
@@ -789,7 +789,7 @@ err_exit:
 }
 
 
-PyDoc_STRVAR( tasklet_kill__doc__,
+PyDoc_STRVAR(tasklet_kill__doc__,
 "tasklet.kill -- raise a TaskletExit exception for the tasklet.\n\
 Note that this is a regular exception that can be caught.\n\
 The tasklet is immediately activated.\n\
@@ -1117,9 +1117,9 @@ tasklet_thread_id(PyTaskletObject *task)
 
 static PyMemberDef tasklet_members[] = {
     {"cstate", T_OBJECT, offsetof(PyTaskletObject, cstate), READONLY,
-     "the C stack object associated with the tasklet.\n\
+     PyDoc_STR("the C stack object associated with the tasklet.\n\
      Every tasklet has a cstate, even if it is a trivial one.\n\
-     Please see the cstate doc and the stackless documentation."},
+     Please see the cstate doc and the stackless documentation.")},
     {"tempval", T_OBJECT, offsetof(PyTaskletObject, tempval), 0},
     /* blocked, slicing_lock, atomic and such are treated by tp_getset */
     {0}
@@ -1127,80 +1127,80 @@ static PyMemberDef tasklet_members[] = {
 
 static PyGetSetDef tasklet_getsetlist[] = {
     {"next", (getter)tasklet_get_next, NULL,
-     "the next tasklet in a a circular list of tasklets."},
+     PyDoc_STR("the next tasklet in a a circular list of tasklets.")},
 
     {"prev", (getter)tasklet_get_prev, NULL,
-     "the previous tasklet in a circular list of tasklets"},
+     PyDoc_STR("the previous tasklet in a circular list of tasklets")},
 
     {"_channel", (getter)tasklet_get_channel, NULL,
-     "The channel this tasklet is blocked on, or None if it is not blocked.\n"
+     PyDoc_STR("The channel this tasklet is blocked on, or None if it is not blocked.\n"
      "This computed attribute may cause a linear search and should normally\n"
-     "not be used, or be replaced by a real attribute in a derived type."
+     "not be used, or be replaced by a real attribute in a derived type.")
     },
 
     {"blocked", (getter)tasklet_get_blocked, NULL,
-     "Nonzero if waiting on a channel (1: send, -1: receive).\n"
-     "Part of the flags word."},
+     PyDoc_STR("Nonzero if waiting on a channel (1: send, -1: receive).\n"
+     "Part of the flags word.")},
 
     {"atomic", (getter)tasklet_get_atomic, NULL,
-     "atomic inhibits scheduling of this tasklet. See set_atomic()\n"
-     "Part of the flags word."},
+     PyDoc_STR("atomic inhibits scheduling of this tasklet. See set_atomic()\n"
+     "Part of the flags word.")},
 
     {"ignore_nesting", (getter)tasklet_get_ignore_nesting, NULL,
-     "unless ignore_nesting is set, any nesting level > 0 inhibits\n"
+     PyDoc_STR("unless ignore_nesting is set, any nesting level > 0 inhibits\n"
      "auto-scheduling of this tasklet. See set_ignore_nesting()\n"
-    "Part of the flags word."},
+     "Part of the flags word.")},
 
     {"frame", (getter)tasklet_get_frame, NULL,
-    "the current frame of this tasklet. For the running tasklet,\n"
-    "this is redirected to tstate.frame."},
+     PyDoc_STR("the current frame of this tasklet. For the running tasklet,\n"
+     "this is redirected to tstate.frame.")},
 
     {"block_trap", (getter)tasklet_get_block_trap,
                    (setter)tasklet_set_block_trap,
-     "An individual lock against blocking on a channel.\n"
+     PyDoc_STR("An individual lock against blocking on a channel.\n"
      "This is used as a debugging aid to find out undesired blocking.\n"
-     "Instead of trying to block, an exception is raised."},
+     "Instead of trying to block, an exception is raised.")},
 
     {"is_main", (getter)tasklet_is_main, NULL,
-     "There always exists exactly one tasklet per thread which acts as\n"
+     PyDoc_STR("There always exists exactly one tasklet per thread which acts as\n"
      "main. It receives all uncaught exceptions and can act as a watchdog.\n"
-     "This attribute is computed."},
+     "This attribute is computed.")},
 
     {"is_current", (getter)tasklet_is_current, NULL,
-     "There always exists exactly one tasklet per thread which is "
+     PyDoc_STR("There always exists exactly one tasklet per thread which is "
      "currently running.\n"
-     "This attribute is computed."},
+     "This attribute is computed.")},
 
     {"paused", (getter)tasklet_paused, NULL,
-     "A tasklet is said to be paused if it is neither in the runnables list\n"
+     PyDoc_STR("A tasklet is said to be paused if it is neither in the runnables list\n"
      "nor blocked, but alive. This state is entered after a t.remove()\n"
      "or by the main tasklet, when it is acting as a watchdog.\n"
-     "This attribute is computed."},
+     "This attribute is computed.")},
 
     {"scheduled", (getter)tasklet_scheduled, NULL,
-     "A tasklet is said to be scheduled if it is either in the runnables list\n"
+     PyDoc_STR("A tasklet is said to be scheduled if it is either in the runnables list\n"
      "or waiting in a channel.\n"
-     "This attribute is computed."},
+     "This attribute is computed.")},
 
     {"recursion_depth", (getter)tasklet_get_recursion_depth, NULL,
-     "The system recursion_depth is replicated for every tasklet.\n"
-     "They all start running with a recursion_depth of zero."},
+     PyDoc_STR("The system recursion_depth is replicated for every tasklet.\n"
+     "They all start running with a recursion_depth of zero.")},
 
     {"nesting_level", (getter)tasklet_get_nesting_level, NULL,
-     "The interpreter nesting level is monitored by every tasklet.\n"
-     "They all start running with a nesting level of zero."},
+     PyDoc_STR("The interpreter nesting level is monitored by every tasklet.\n"
+     "They all start running with a nesting level of zero.")},
 
     {"restorable", (getter)tasklet_restorable, NULL,
-     "True, if the tasklet can be completely restored by pickling/unpickling.\n"
+     PyDoc_STR("True, if the tasklet can be completely restored by pickling/unpickling.\n"
      "All tasklets can be pickled for debugging/inspection purposes, but an \n"
-     "unpickled tasklet might have lost runtime information (C stack)."},
+     "unpickled tasklet might have lost runtime information (C stack).")},
 
     {"alive", (getter)tasklet_alive, NULL,
-     "A tasklet is alive if it has an associated frame.\n"
-     "This attribute is computed."},
+     PyDoc_STR("A tasklet is alive if it has an associated frame.\n"
+     "This attribute is computed.")},
 
     {"thread_id", (getter)tasklet_thread_id, NULL,
-     "Return the thread id of the thread the tasklet belongs to."},
+     PyDoc_STR("Return the thread id of the thread the tasklet belongs to.")},
 
     {0},
 };
@@ -1248,7 +1248,7 @@ static PyCMethodDef tasklet_cmethods[] = {
     {NULL}                       /* sentinel */
 };
 
-PyDoc_STRVAR( tasklet__doc__,
+PyDoc_STRVAR(tasklet__doc__,
 "A tasklet object represents a tiny task in a Python thread.\n\
 At program start, there is always one running main tasklet.\n\
 New tasklets can be created with methods from the stackless\n\
