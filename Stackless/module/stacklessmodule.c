@@ -1229,7 +1229,6 @@ _PyStackless_Init(void)
     if (slp_module == NULL)
         goto error;
 
-    if (slp_cstack_init()) goto error;
     if (init_prickelpit()) goto error;
 
     dict = PyModule_GetDict(slp_module);
