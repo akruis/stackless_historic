@@ -44,13 +44,28 @@ slp_current_remove(void)
     return ret;
 }
 
+/*
+ * Determine if a tasklet has C stack, and thus needs to
+ * be switched to (killed) before it can be deleted.
+ * Tasklets without C stack (in a soft switched state)
+ * need only be released.
+ */
+static int
+tasklet_has_c_stack(PyTaskletObject *t)
+{
+    return t->f.frame && t->cstate && t->cstate->nesting_level != 0 ;
+}
+
 static int
 tasklet_traverse(PyTaskletObject *t, visitproc visit, void *arg)
 {
     PyFrameObject *f;
     PyThreadState *ts = PyThreadState_GET();
-    if (ts != t->cstate->tstate)
-        /* can't collect from this thread! */
+
+    /* tasklets that need to be switched to for the kill, can't be collected.
+     * Only trivial decrefs are allowed during GC collect
+     */
+    if (tasklet_has_c_stack(t))
         PyObject_GC_Collectable((PyObject *)t, visit, arg, 0);
 
     /* we own the "execute reference" of all the frames */
@@ -60,6 +75,33 @@ tasklet_traverse(PyTaskletObject *t, visitproc visit, void *arg)
     Py_VISIT(t->tempval);
     Py_VISIT(t->cstate);
     return 0;
+}
+
+static void
+tasklet_clear_frames(PyTaskletObject *t)
+{
+    /* release frame chain, we own the "execute reference" of all the frames */
+    PyFrameObject *f;
+    f = t->f.frame;
+    t->f.frame = NULL;
+    while (f != NULL) {
+        PyFrameObject *tmp = f->f_back;
+        f->f_back = NULL;
+        Py_DECREF(f);
+        f = tmp;
+    }
+}
+
+static void
+tasklet_clear(PyTaskletObject *t)
+{
+    tasklet_clear_frames(t);
+    TASKLET_SETVAL(t, Py_None); /* always non-zero */
+
+    /* unlink task from cstate */
+    if (t->cstate != NULL && t->cstate->task == t)
+        t->cstate->task = NULL;
+    Py_CLEAR(t->cstate);
 }
 
 /*
@@ -99,22 +141,9 @@ kill_finally (PyObject *ob)
 /* destructing a tasklet without destroying it */
 
 static void
-tasklet_clear(PyTaskletObject *t)
-{
-    /* if (slp_get_frame(t) != NULL) */
-    if (t->f.frame != NULL)
-        kill_finally((PyObject *) t);
-    TASKLET_SETVAL(t, Py_None); /* always non-zero */
-    /* unlink task from cstate */
-    if (t->cstate != NULL && t->cstate->task == t)
-        t->cstate->task = NULL;
-}
-
-
-static void
 tasklet_dealloc(PyTaskletObject *t)
 {
-    if (t->f.frame != NULL) {
+    if (tasklet_has_c_stack(t)) {
         /*
          * we want to cleanly kill the tasklet in the case it
          * was forgotten. One way would be to resurrect it,
@@ -127,9 +156,10 @@ tasklet_dealloc(PyTaskletObject *t)
             return;
         }
     }
+
+    tasklet_clear_frames(t);
     if (t->tsk_weakreflist != NULL)
         PyObject_ClearWeakRefs((PyObject *)t);
-    assert(t->f.frame == NULL);
     if (t->cstate != NULL) {
         assert(t->cstate->task != t || t->cstate->ob_size == 0);
         Py_DECREF(t->cstate);
@@ -817,13 +847,9 @@ static TASKLET_KILL_HEAD(impl_tasklet_kill)
      * silently do nothing if the tasklet is dead.
      * simple raising would kill ourself in this case.
      */
-    if (slp_get_frame(task) == NULL) {
-        /* just clear it, typically a thread's main */
-        /* XXX not clear why this isn't covered in tasklet_end */
-        task->ob_type->tp_clear((PyObject *)task);
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
+    if (slp_get_frame(task) == NULL)
+        Py_RETURN_NONE;
+
     /* we might be called after exceptions are gone */
     if (PyExc_TaskletExit == NULL) {
         PyExc_TaskletExit = PyString_FromString("zombie");

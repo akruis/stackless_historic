@@ -211,7 +211,7 @@ PyTypeObject * PyFlexType_Build( const char *modulename,
 
 PyTypeObject * PyFlexType_TypePtr = NULL;
 
-PyDoc_STRVAR( pyflextype__doc__,
+PyDoc_STRVAR(pyflextype__doc__,
 "An extension type that supports cached virtual C methods");
 
 int
