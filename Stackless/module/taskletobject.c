@@ -847,8 +847,12 @@ static TASKLET_KILL_HEAD(impl_tasklet_kill)
      * silently do nothing if the tasklet is dead.
      * simple raising would kill ourself in this case.
      */
-    if (slp_get_frame(task) == NULL)
+    if (slp_get_frame(task) == NULL) {
+        /* but clear it from its cstate */
+        if (task->cstate != NULL && task->cstate->task == task)
+            task->cstate->task = NULL;
         Py_RETURN_NONE;
+    }
 
     /* we might be called after exceptions are gone */
     if (PyExc_TaskletExit == NULL) {
